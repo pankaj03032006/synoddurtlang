@@ -1,0 +1,306 @@
+#loginBody {
+    height: 100vh;
+    width: 100%;
+    background-image: url('/public/images/login-background.png');
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+}
+
+.greenLayer1 {
+    height: 100vh;
+    width: 100%;
+    background-color: rgba(126, 211, 165, 0.29);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(2px);
+}
+
+#loginFormDiv {
+    height: auto;
+    min-height: 500px;
+    width: 45%;
+    max-width: 500px;
+    background-color: rgba(255, 255, 255, 0.95);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Proxima Nova', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#loginFormDiv p {
+    padding: 10px 0 20px;
+    text-align: center;
+    color: #646D82;
+    font-size: 1.1rem;
+}
+
+#loginFormDiv button {
+    transition: all 0.2s ease-in-out;
+    font-weight: 500;
+}
+
+#loginFormDiv button:hover {
+    transition: all 0.2s ease-in-out;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+#loginFormDiv button:active {
+    transform: translateY(0);
+}
+
+#loginFormDiv input {
+    background-color: transparent;
+    transition: all 0.2s ease-in-out;
+}
+
+#loginFormDiv input:focus {
+    box-shadow: 0 0 0 3px rgba(49, 179, 114, 0.1);
+    border-color: #31b372;
+}
+
+#loginBtn {
+    padding: 12px 24px;
+    color: white;
+    background-color: #31b372;
+    border: 0;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+#loginBtn:hover {
+    background-color: #269a5f;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(49, 179, 114, 0.3);
+}
+
+#loginBtn:active {
+    transform: translateY(0);
+}
+
+#loginBtn:disabled {
+    background-color: #a0d4b6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.signUpBtn {
+    padding: 12px 24px;
+    color: #31b372;
+    background-color: white;
+    border: 1px solid #31b372;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.signUpBtn:hover {
+    background-color: #f0f9f4;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(49, 179, 114, 0.1);
+}
+
+.signUpBtn:active {
+    transform: translateY(0);
+}
+
+.signUpBtn:disabled {
+    color: #a0d4b6;
+    border-color: #a0d4b6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Floating label styling */
+#loginFormDiv .form-floating > label {
+    color: #6c757d;
+    font-weight: 400;
+}
+
+#loginFormDiv .form-floating > input:focus ~ label,
+#loginFormDiv .form-floating > input:not(:placeholder-shown) ~ label {
+    color: #31b372;
+}
+
+/* Invalid field styling */
+#loginFormDiv .is-invalid {
+    border-color: #dc3545;
+    background-image: none;
+}
+
+#loginFormDiv .is-invalid:focus {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+}
+
+.invalid-feedback {
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    color: #dc3545;
+}
+
+/* Alert styling */
+#loginFormDiv .alert-info {
+    background-color: #e8f4fd;
+    border-color: #b8e0f5;
+    color: #0c5460;
+    border-radius: 8px;
+    font-size: 0.85rem;
+}
+
+/* Password toggle button styling */
+#loginFormDiv .position-relative button {
+    background-color: transparent;
+    border: none;
+    color: #6c757d;
+    padding: 0;
+}
+
+#loginFormDiv .position-relative button:hover {
+    background-color: transparent;
+    transform: none;
+    box-shadow: none;
+    color: #31b372;
+}
+
+/* Responsive Design */
+@media screen and (max-width: 1200px) {
+    #loginFormDiv {
+        width: 55%;
+        max-width: 550px;
+    }
+}
+
+@media screen and (max-width: 992px) {
+    #loginFormDiv {
+        width: 65%;
+        max-width: 600px;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .greenLayer1 {
+        backdrop-filter: blur(4px);
+    }
+    
+    #loginFormDiv {
+        width: 85%;
+        min-height: auto;
+        padding: 1.5rem;
+        margin: 1rem;
+    }
+    
+    #loginFormDiv p {
+        font-size: 1rem;
+        padding: 5px 0 15px;
+    }
+    
+    #loginBtn, .signUpBtn {
+        padding: 10px 20px;
+        font-size: 0.9rem;
+    }
+}
+
+@media screen and (max-width: 576px) {
+    #loginBody {
+        background-attachment: scroll;
+    }
+    
+    #loginFormDiv {
+        width: 95%;
+        padding: 1.25rem;
+    }
+    
+    #loginFormDiv p {
+        font-size: 0.9rem;
+    }
+    
+    .form-floating {
+        font-size: 0.9rem;
+    }
+    
+    .alert-info small {
+        font-size: 0.75rem;
+    }
+}
+
+/* For very small devices */
+@media screen and (max-width: 380px) {
+    #loginFormDiv {
+        padding: 1rem;
+    }
+    
+    #loginBtn, .signUpBtn {
+        padding: 8px 16px;
+        font-size: 0.85rem;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    #loginFormDiv {
+        background-color: rgba(255, 255, 255, 0.98);
+        border: 1px solid #000;
+    }
+    
+    #loginBtn {
+        background-color: #006633;
+    }
+    
+    .signUpBtn {
+        border: 2px solid #006633;
+    }
+}
+
+/* Dark mode support (optional) */
+@media (prefers-color-scheme: dark) {
+    #loginFormDiv {
+        background-color: rgba(30, 30, 30, 0.95);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    }
+    
+    #loginFormDiv p {
+        color: #b0b0b0;
+    }
+    
+    #loginFormDiv input {
+        color: #ffffff;
+    }
+    
+    .signUpBtn {
+        background-color: #2c2c2c;
+        color: #31b372;
+    }
+    
+    .signUpBtn:hover {
+        background-color: #3a3a3a;
+    }
+    
+    .invalid-feedback {
+        color: #ff6b6b;
+    }
+}

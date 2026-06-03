@@ -1,0 +1,402 @@
+#appointmentMain {
+    min-height: 100vh;
+    width: 100%;
+    margin-top: 50px;
+    padding-left: 50px;
+    padding-right: 30px;
+}
+
+.pageTitle {
+    color: rgb(49, 179, 114);
+    padding: 5px 0;
+    font-weight: bold;
+    margin-bottom: 20px;
+    border-bottom: 3px solid rgb(49, 179, 114);
+    display: inline-block;
+}
+
+#slotGrid {
+    display: grid;
+    grid-template-columns: 40% 60%;
+    padding: 30px 5px 30px 0;
+    gap: 20px;
+}
+
+#calendarDiv {
+    border: 0px !important;
+    border-radius: 8px;
+    vertical-align: middle !important;
+    background: white;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+#slotCreationDiv {
+    padding-left: 20px;
+}
+
+#slotCreationDiv form {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+#appointmentMain h4 {
+    color: rgb(49, 179, 114);
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+.slotCard {
+    padding: 10px 0;
+    border: 2px solid rgb(49, 179, 114);
+    margin: 10px;
+    cursor: pointer;
+    width: 120px;
+    text-align: center;
+    border-radius: 8px;
+    background-color: white;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    color: rgb(49, 179, 114);
+}
+
+.slotCard:hover {
+    transform: scale(1.05);
+    background-color: rgb(49, 179, 114);
+    color: white;
+    box-shadow: 0 4px 12px rgba(49, 179, 114, 0.3);
+}
+
+/* Available Slots Header */
+.availableSlotsHeader {
+    margin-top: 30px;
+    margin-bottom: 15px;
+}
+
+.availableSlotsHeader h4 {
+    color: rgb(49, 179, 114);
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.availableSlotsHeader p {
+    color: #666;
+    font-size: 14px;
+    margin-top: -5px;
+}
+
+/* Form Styling */
+#slotCreationDiv label {
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+#slotCreationDiv select,
+#slotCreationDiv input[type="date"] {
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 8px 12px;
+    width: 100%;
+    transition: border-color 0.3s ease;
+}
+
+#slotCreationDiv select:focus,
+#slotCreationDiv input[type="date"]:focus {
+    border-color: rgb(49, 179, 114);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(49, 179, 114, 0.1);
+}
+
+/* Checkbox Styling for Time Slots */
+#slotCreationDiv .form-check {
+    margin-bottom: 10px;
+}
+
+#slotCreationDiv .form-check-input {
+    width: 18px;
+    height: 18px;
+    margin-right: 8px;
+    cursor: pointer;
+}
+
+#slotCreationDiv .form-check-input:checked {
+    background-color: rgb(49, 179, 114);
+    border-color: rgb(49, 179, 114);
+}
+
+#slotCreationDiv .form-check-label {
+    cursor: pointer;
+    font-weight: normal;
+    color: #555;
+}
+
+/* Submit Button */
+#slotCreationDiv input[type="submit"] {
+    background-color: rgb(49, 179, 114);
+    border: none;
+    padding: 10px 30px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    margin-top: 20px;
+}
+
+#slotCreationDiv input[type="submit"]:hover {
+    background-color: rgb(39, 149, 94);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(49, 179, 114, 0.3);
+}
+
+/* Loading State */
+.loadingSpinner {
+    text-align: center;
+    padding: 40px;
+    color: rgb(49, 179, 114);
+}
+
+/* Empty State Messages */
+.emptyState {
+    text-align: center;
+    padding: 40px;
+    color: #999;
+    background: #f9f9f9;
+    border-radius: 8px;
+    margin-top: 20px;
+}
+
+/* Doctor and Patient Specific Styles */
+.doctorView #slotCreationDiv form {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+}
+
+.patientView .slotCard {
+    cursor: pointer;
+}
+
+/* Responsive Design */
+@media screen and (max-width: 1200px) {
+    #slotGrid {
+        gap: 15px;
+    }
+    
+    #slotCreationDiv {
+        padding-left: 15px;
+    }
+}
+
+@media screen and (max-width: 1000px) {
+    #appointmentMain {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+    
+    #slotGrid {
+        grid-template-columns: 100%;
+        gap: 30px;
+    }
+
+    #calendarDiv {
+        display: block;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+
+    #slotCreationDiv {
+        padding-left: 0;
+    }
+    
+    #slotCreationDiv form {
+        padding: 20px;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    #appointmentMain {
+        margin-top: 30px;
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+    
+    .pageTitle {
+        font-size: 24px;
+    }
+    
+    #appointmentMain h4 {
+        font-size: 18px;
+    }
+    
+    .slotCard {
+        width: 100px;
+        margin: 8px;
+        font-size: 14px;
+    }
+    
+    #slotCreationDiv form {
+        padding: 15px;
+    }
+    
+    #slotCreationDiv .form-check-inline {
+        margin-right: 0.5rem;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .slotCard {
+        width: calc(50% - 20px);
+        min-width: 100px;
+    }
+    
+    .d-flex.flex-wrap {
+        justify-content: center;
+    }
+    
+    #slotCreationDiv .form-check {
+        display: inline-block;
+        width: auto;
+        margin-right: 10px;
+    }
+}
+
+/* Animation for Slot Cards */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.slotCard {
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* Scrollbar Styling */
+#slotCreationDiv::-webkit-scrollbar {
+    width: 8px;
+}
+
+#slotCreationDiv::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+#slotCreationDiv::-webkit-scrollbar-thumb {
+    background: rgb(49, 179, 114);
+    border-radius: 10px;
+}
+
+#slotCreationDiv::-webkit-scrollbar-thumb:hover {
+    background: rgb(39, 149, 94);
+}
+
+/* Table Container Styling */
+.tableContainer {
+    overflow-x: auto;
+    margin-top: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Badge/Slot Status */
+.slotStatus {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.slotStatusAvailable {
+    background-color: #e8f5e9;
+    color: rgb(49, 179, 114);
+}
+
+.slotStatusBooked {
+    background-color: #ffebee;
+    color: #f44336;
+}
+
+/* Responsive Table */
+@media screen and (max-width: 768px) {
+    .MuiTable-root {
+        font-size: 12px;
+    }
+    
+    .MuiTableCell-root {
+        padding: 8px;
+    }
+}
+
+/* Additional Mobile Optimizations */
+@media screen and (max-width: 600px) {
+    /* Make form elements full width on mobile */
+    #slotCreationDiv .col-sm-7,
+    #slotCreationDiv .col-sm-9,
+    #slotCreationDiv .col-sm-3 {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    
+    #slotCreationDiv label {
+        display: block;
+        margin-bottom: 5px;
+    }
+    
+    /* Improve touch targets on mobile */
+    .slotCard {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* Stack form checkboxes vertically on very small screens */
+    #slotCreationDiv .form-check-inline {
+        display: block;
+        margin-bottom: 8px;
+    }
+    
+    /* Adjust modal for mobile */
+    .MuiDialog-paper {
+        margin: 16px;
+        width: calc(100% - 32px) !important;
+    }
+}
+
+/* Dark Mode Support (Optional) */
+@media (prefers-color-scheme: dark) {
+    #appointmentMain {
+        background-color: #121212;
+    }
+    
+    #slotCreationDiv form,
+    #calendarDiv {
+        background: #1e1e1e;
+        color: #ffffff;
+    }
+    
+    #slotCreationDiv label {
+        color: #e0e0e0;
+    }
+    
+    .slotCard {
+        background-color: #2d2d2d;
+        color: rgb(49, 179, 114);
+        border-color: rgb(49, 179, 114);
+    }
+    
+    .slotCard:hover {
+        background-color: rgb(49, 179, 114);
+        color: #1e1e1e;
+    }
+    
+    .emptyState {
+        background: #1e1e1e;
+        color: #888;
+    }
+}

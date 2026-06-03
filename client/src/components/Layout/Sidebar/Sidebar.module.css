@@ -1,0 +1,182 @@
+.sidebar {
+    background-color: #31b372;
+}
+
+/* Custom scrollbar for sidebar */
+.sidebar ::-webkit-scrollbar {
+    width: 4px;
+}
+
+.sidebar ::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+.sidebar ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+}
+
+.sidebar ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+/* User info footer */
+.userInfoFooter {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    gap: 12px;
+    margin: 8px;
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.userAvatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #1b4f32;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.userDetails {
+    flex: 1;
+    overflow: hidden;
+}
+
+/* Animation for menu items */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.sidebar .MuiListItem-root {
+    animation: slideIn 0.3s ease-out;
+}
+
+/* Active link styling */
+.activeLink {
+    background-color: #1b4f32;
+    border-left: 3px solid white;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 600px) {
+    .userInfoFooter {
+        padding: 12px;
+    }
+    
+    .userAvatar {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+    }
+}
+
+/* Hover effects */
+.sidebar .MuiListItemButton-root {
+    position: relative;
+    overflow: hidden;
+}
+
+.sidebar .MuiListItemButton-root::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.sidebar .MuiListItemButton-root:hover::before {
+    opacity: 1;
+}
+
+
+/* Custom scrollbar for sidebar */
+.sidebar ::-webkit-scrollbar {
+    width: 4px;
+}
+
+.sidebar ::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+.sidebar ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+}
+
+.sidebar ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+/* Animation for menu items */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Hover effects */
+.MuiListItemButton-root {
+    position: relative;
+    overflow: hidden;
+}
+
+.MuiListItemButton-root::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.MuiListItemButton-root:hover::before {
+    opacity: 1;
+}
+
+/* Logo animation */
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 600px) {
+    .MuiDrawer-paper {
+        width: 60px;
+    }
+}
