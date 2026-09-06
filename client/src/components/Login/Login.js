@@ -277,6 +277,13 @@ function Login() {
                         </div>
 
                         {/* Demo Credentials Info */}
+                          <div className="alert alert-info mt-4 mb-0" role="alert">
+                            <small>
+                                <strong>Demo Credentials:</strong><br />
+                                user: user@gmail.com / user123<br />
+                               
+                            </small>
+                        </div>
                       
                     </form>
                 </div>
