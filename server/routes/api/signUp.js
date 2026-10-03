@@ -85,8 +85,8 @@ const sendVerificationEmail = async (email, token) => {
         from: process.env.GMAIL_USER,
         to: email,
         subject: 'Verify your email address',
-        text: `Please click the following link to verify your email address: https://hospital-management-system-2-dni5.onrender.com/verify/${token}`,
-        html: `<p>Please click this link to verify your account:</p> <a href="https://hospital-management-system-2-dni5.onrender.com/verify/${token}">Verify</a>`,
+        text: `Please click the following link to verify your email address: http://localhost:5000/verify/${token}`,
+        html: `<p>Please click this link to verify your account:</p> <a href="http://localhost:5000/verify/${token}">Verify</a>`,
     };
 
     let resp = await transporter.sendMail(mailOptions);

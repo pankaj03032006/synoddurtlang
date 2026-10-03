@@ -69,7 +69,7 @@ function Login() {
             
             console.log('Sending login request:', { email: user.email });
             
-            const response = await fetch('https://hospital-management-system-2-dni5.onrender.com/login', {
+            const response = await fetch('http://localhost:5000/login', {
                 method: "POST",
                 headers: {
                     'Content-Type': 'application/json',

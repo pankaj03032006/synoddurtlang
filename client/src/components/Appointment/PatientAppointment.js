@@ -130,9 +130,9 @@ function PatientAppointment() {
         setBookingLoading(true);
         
         try {
-            console.log("Making API call to: https://hospital-management-system-2-dni5.onrender.com/appointments/");
+            console.log("Making API call to: http://localhost:5000/appointments/");
             
-            const response = await axios.put(`https://hospital-management-system-2-dni5.onrender.com/appointments/`, reqObj, {
+            const response = await axios.put(`http://localhost:5000/appointments/`, reqObj, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${localStorage.getItem("token")}`

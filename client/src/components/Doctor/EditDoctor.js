@@ -81,7 +81,7 @@ function Editdoctor() {
   const getdoctorById = useCallback(async () => {
     setFetchingData(true);
     try {
-      const response = await axios.get(`https://hospital-management-system-2-dni5.onrender.com/doctors/${id}`, {
+      const response = await axios.get(`http://localhost:5000/doctors/${id}`, {
         headers: {
           authorization: `Bearer ${localStorage.getItem("token")}`
         }
@@ -150,7 +150,7 @@ function Editdoctor() {
         updateData.confirmPassword = confirmPassword;
       }
       
-      await axios.patch(`https://hospital-management-system-2-dni5.onrender.com/doctors/${id}`, updateData, {
+      await axios.patch(`http://localhost:5000/doctors/${id}`, updateData, {
         headers: {
           authorization: `Bearer ${localStorage.getItem("token")}`
         }

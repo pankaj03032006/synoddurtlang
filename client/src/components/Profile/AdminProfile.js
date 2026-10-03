@@ -43,7 +43,7 @@ function AdminProfile() {
     setLoading(true);
     try {
       let adminUserId = currentUser.userId;
-      const response = await axios.get(`https://hospital-management-system-2-dni5.onrender.com/profile/admin/${adminUserId}`, {
+      const response = await axios.get(`http://localhost:5000/profile/admin/${adminUserId}`, {
         headers: {
           authorization: `Bearer ${localStorage.getItem("token")}`
         }
@@ -87,7 +87,7 @@ function AdminProfile() {
     setIsSubmitting(true);
     
     try {
-      await axios.patch(`https://hospital-management-system-2-dni5.onrender.com/profile/admin/${userId}`, {
+      await axios.patch(`http://localhost:5000/profile/admin/${userId}`, {
         firstName,
         lastName,
         username,

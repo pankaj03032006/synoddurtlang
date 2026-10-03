@@ -65,7 +65,7 @@ function AdminAppointment() {
         };
 
         try {
-            let response = await axios.put(`https://hospital-management-system-2-dni5.onrender.com/appointments/`, reqObj, {
+            let response = await axios.put(`http://localhost:5000/appointments/`, reqObj, {
                 headers: {
                     authorization: `Bearer ${localStorage.getItem("token")}`
                 }
@@ -97,7 +97,7 @@ function AdminAppointment() {
             handleErrorDialogueOpen();
         } else {
             try {
-                let response = await axios.post(`https://hospital-management-system-2-dni5.onrender.com/appointments/add`, {
+                let response = await axios.post(`http://localhost:5000/appointments/add`, {
                     'appDate': getformDate(form.appDate.value),
                     'timeSlots': timeSlots,
                     'doctorID': form.doctor.value

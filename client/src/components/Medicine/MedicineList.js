@@ -41,7 +41,7 @@ function MedicineList() {
     const getMedicines = useCallback(async () => {
         try {
             setLoading(true);
-            const response = await axios.get(`${process.env.REACT_APP_API_URL || 'https://hospital-management-system-2-dni5.onrender.com'}/medicines`, {
+            const response = await axios.get(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/medicines`, {
                 params: {
                     name: name || undefined
                 },
@@ -81,7 +81,7 @@ function MedicineList() {
         setDeleteLoading(true);
         
         try {
-            await axios.delete(`${process.env.REACT_APP_API_URL || 'https://hospital-management-system-2-dni5.onrender.com'}/medicines/${medicineToDelete._id}`, {
+            await axios.delete(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/medicines/${medicineToDelete._id}`, {
                 headers: {
                     'authorization': `Bearer ${localStorage.getItem("token")}`
                 }

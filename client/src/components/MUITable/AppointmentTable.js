@@ -103,7 +103,7 @@ export default function AppointmentTable({
         
         try {
             const response = await axios.put(
-                `${process.env.REACT_APP_API_URL || 'https://hospital-management-system-2-dni5.onrender.com'}/appointments/${appointmentId}`,
+                `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/appointments/${appointmentId}`,
                 reqObj,
                 {
                     headers: {
@@ -170,7 +170,7 @@ export default function AppointmentTable({
         
         try {
             const response = await axios.get(
-                `${process.env.REACT_APP_API_URL || 'https://hospital-management-system-2-dni5.onrender.com'}/appointments/${appID}`,
+                `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/appointments/${appID}`,
                 {
                     headers: {
                         authorization: `Bearer ${localStorage.getItem("token")}`

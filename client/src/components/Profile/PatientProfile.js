@@ -48,7 +48,7 @@ function PatientProfile() {
     setLoading(true);
     try {
       let patientUserId = currentUser.userId;
-      const response = await axios.get(`https://hospital-management-system-2-dni5.onrender.com/profile/patient/${patientUserId}`, {
+      const response = await axios.get(`http://localhost:5000/profile/patient/${patientUserId}`, {
         headers: {
           authorization: `Bearer ${localStorage.getItem("token")}`
         }
@@ -94,7 +94,7 @@ function PatientProfile() {
     setIsSubmitting(true);
     
     try {
-      await axios.patch(`https://hospital-management-system-2-dni5.onrender.com/patients/${patientId}`, {
+      await axios.patch(`http://localhost:5000/patients/${patientId}`, {
         firstName,
         lastName,
         username,

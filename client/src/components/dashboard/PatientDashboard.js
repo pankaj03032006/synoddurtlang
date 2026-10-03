@@ -39,7 +39,7 @@ export default function PatientDashboard() {
 	const getBookedSlots = async () => {
 		try {
 			const response = await axios.post(
-				`https://hospital-management-system-2-dni5.onrender.com/appointments`,
+				`http://localhost:5000/appointments`,
 				{ isTimeSlotAvailable: false },
 				{
 					headers: {
@@ -75,7 +75,7 @@ export default function PatientDashboard() {
 	const getPrescription = async () => {
 		try {
 			const response = await axios.post(
-				`https://hospital-management-system-2-dni5.onrender.com/prescriptions`,
+				`http://localhost:5000/prescriptions`,
 				{},
 				{
 					headers: {

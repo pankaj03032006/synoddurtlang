@@ -145,7 +145,7 @@ function Editmedicine() {
   const getmedicineById = useCallback(async () => {
     try {
       setFetchLoading(true);
-      const response = await axios.get(`${process.env.REACT_APP_API_URL || 'https://hospital-management-system-2-dni5.onrender.com'}/medicines/${id}`, {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/medicines/${id}`, {
         headers: {
           'authorization': `Bearer ${localStorage.getItem("token")}`
         }
@@ -244,7 +244,7 @@ function Editmedicine() {
       };
       
       const response = await axios.patch(
-        `${process.env.REACT_APP_API_URL || 'https://hospital-management-system-2-dni5.onrender.com'}/medicines/${id}`,
+        `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/medicines/${id}`,
         medicineData,
         {
           headers: {

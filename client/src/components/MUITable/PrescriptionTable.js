@@ -102,7 +102,7 @@ export default function PrescriptionTable({ prescriptionList, loading: propLoadi
         setPaymentLoading(true);
         
         try {
-            const apiSetQrcode = `${process.env.REACT_APP_SERVER_URL || 'https://hospital-management-system-2-dni5.onrender.com'}/api/paypal/payment`;
+            const apiSetQrcode = `${process.env.REACT_APP_SERVER_URL || 'http://localhost:5000'}/api/paypal/payment`;
             const response = await fetch(apiSetQrcode, {
                 method: 'POST',
                 headers: {
@@ -132,7 +132,7 @@ export default function PrescriptionTable({ prescriptionList, loading: propLoadi
         
         try {
             const response = await axios.get(
-                `${process.env.REACT_APP_API_URL || 'https://hospital-management-system-2-dni5.onrender.com'}/prescription/invoice/${prescriptionId}`,
+                `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/prescription/invoice/${prescriptionId}`,
                 {
                     responseType: 'blob',
                     headers: {

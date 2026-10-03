@@ -32,7 +32,7 @@ export default function Settings() {
     useEffect(() => {
         const fetchProfile = async () => {
             try {
-                const response = await axios.get('https://hospital-management-system-2-dni5.onrender.com/user/profile', {
+                const response = await axios.get('http://localhost:5000/user/profile', {
                     headers: { authorization: `Bearer ${token}` }
                 });
                 if (response.data.message === "success") {
@@ -61,7 +61,7 @@ export default function Settings() {
         e.preventDefault();
         setLoading(true);
         try {
-            const response = await axios.put('https://hospital-management-system-2-dni5.onrender.com/user/profile',
+            const response = await axios.put('http://localhost:5000/user/profile',
                 profile,
                 { headers: { authorization: `Bearer ${token}` } }
             );
@@ -89,7 +89,7 @@ export default function Settings() {
         
         setLoading(true);
         try {
-            const response = await axios.put('https://hospital-management-system-2-dni5.onrender.com/user/change-password',
+            const response = await axios.put('http://localhost:5000/user/change-password',
                 {
                     currentPassword: passwordData.currentPassword,
                     newPassword: passwordData.newPassword

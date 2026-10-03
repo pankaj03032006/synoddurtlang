@@ -41,7 +41,7 @@ function EditUser() {
 
     setLoading(true);
     try {
-      const response = await axios.get(`https://hospital-management-system-2-dni5.onrender.com/users/${id}`, {
+      const response = await axios.get(`http://localhost:5000/users/${id}`, {
         headers: {
           authorization: `Bearer ${localStorage.getItem("token")}`
         }
@@ -92,7 +92,7 @@ function EditUser() {
     setIsSubmitting(true);
     
     try {
-      await axios.patch(`https://hospital-management-system-2-dni5.onrender.com/users/${id}`,
+      await axios.patch(`http://localhost:5000/users/${id}`,
         {
           firstName,
           lastName,

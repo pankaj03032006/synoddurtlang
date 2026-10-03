@@ -1,143 +1,97 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useLocation, Navigate } from 'react-router-dom';
-import Box from '@mui/material/Box';
+import React, { useEffect, useState } from "react";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import Box from "@mui/material/Box";
+
+// The server's message has a trailing space, so compare the trimmed text
+const ALREADY_VALIDATED = "Session already create";
+
+const PageShell = ({ children }) => (
+    <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+        <div className="page-wrapper">
+            <div className="content">
+                <div className="row filter-row">{children}</div>
+            </div>
+        </div>
+    </Box>
+);
 
 const Success = () => {
-  const [session, setSession] = useState({});
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [shouldRedirect, setShouldRedirect] = useState(false);
-  const location = useLocation();
-  const queryLocation = location.search;
+    const { search } = useLocation();
+    const navigate = useNavigate();
 
-  const fetchSession = useCallback(async () => {
-    if (!queryLocation) {
-      return;
+    // Without query params there is nothing to verify, so start in the error state
+    const [status, setStatus] = useState(search ? "loading" : "error");
+    const [errorMessage, setErrorMessage] = useState(
+        search ? "" : "Payment details are missing from the link."
+    );
+
+    useEffect(() => {
+        if (!search) return undefined;
+
+        const controller = new AbortController();
+
+        const verifyPayment = async () => {
+            try {
+                const response = await fetch(
+                    `${process.env.REACT_APP_SERVER_URL}/api/paypal/success${search}`,
+                    { signal: controller.signal }
+                );
+
+                if (!response.ok) {
+                    throw new Error(`Server responded with status ${response.status}`);
+                }
+
+                const data = await response.json();
+                const verified =
+                    data.status === "success" || data.message?.trim() === ALREADY_VALIDATED;
+
+                if (verified) {
+                    setStatus("done");
+                } else {
+                    setErrorMessage(data.message || "Your payment could not be verified.");
+                    setStatus("error");
+                }
+            } catch (error) {
+                if (error.name === "AbortError") return;
+                console.error("Error verifying payment:", error);
+                setErrorMessage(error.message || "Failed to verify your payment.");
+                setStatus("error");
+            }
+        };
+
+        verifyPayment();
+        return () => controller.abort();
+    }, [search]);
+
+    if (status === "done") {
+        return <Navigate to="/prescriptions" replace />;
     }
-    
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const response = await fetch(
-        process.env.REACT_APP_SERVER_URL + '/api/paypal/success' + queryLocation
-      );
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const products = await response.json();
-      setSession(products);
-      
-      // Set redirect flag for successful session
-      if (products.status === 'success' || products.message === 'Session already create ') {
-        setShouldRedirect(true);
-      }
-    } catch (error) {
-      console.error('Error fetching session:', error);
-      setError(error.message || 'Failed to fetch session data');
-      setSession({ status: 'fail', message: 'An error occurred while processing your payment' });
-    } finally {
-      setLoading(false);
-    }
-  }, [queryLocation]);
 
-  useEffect(() => {
-    fetchSession();
-  }, [fetchSession]);
-
-  // Handle redirect after session is processed
-  if (shouldRedirect) {
-    return <Navigate to="/prescriptions" />;
-  }
-
-  // Show loading state
-  if (loading) {
-    return (
-      <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
-        <div className="page-wrapper">
-          <div className="content">
-            <div className="row filter-row">
-              <div className="text-center p-4">
-                <div className="spinner-border text-primary" role="status">
-                  <span className="sr-only">Loading...</span>
+    if (status === "loading") {
+        return (
+            <PageShell>
+                <div className="text-center p-4">
+                    <div className="spinner-border text-primary" role="status">
+                        <span className="sr-only">Loading...</span>
+                    </div>
+                    <p>Processing your payment confirmation...</p>
                 </div>
-                <p>Processing your payment confirmation...</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </Box>
-    );
-  }
+            </PageShell>
+        );
+    }
 
-  // Show error state
-  if (error && !session.status) {
     return (
-      <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
-        <div className="page-wrapper">
-          <div className="content">
-            <div className="row filter-row">
-              <h1>Payment Verification Error</h1>
-              <h4>{error}</h4>
-              <button 
-                onClick={() => window.location.href = '/prescriptions'} 
+        <PageShell>
+            <h1>Payment verification failed</h1>
+            <h4>{errorMessage}</h4>
+            <button
+                onClick={() => navigate("/prescriptions")}
                 className="btn btn-primary mt-3"
-              >
+            >
                 Go to Prescriptions
-              </button>
-            </div>
-          </div>
-        </div>
-      </Box>
+            </button>
+        </PageShell>
     );
-  }
-
-  return (
-    <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
-      <div className="page-wrapper">
-        <div className="content">
-          {session.status === 'success' ? (
-            <div className="row filter-row">
-              <h1>Your payment succeeded</h1>
-              <h4>View CheckoutSession response:</h4>
-              <pre className="mt-3 p-3 bg-light rounded">
-                {JSON.stringify(session, null, 2)}
-              </pre>
-            </div>
-          ) : session.message === 'Session already create ' ? (
-            <div className="row filter-row">
-              <h1>Your payment Already Validated</h1>
-              <h4>View CheckoutSession response:</h4>
-              <pre className="mt-3 p-3 bg-light rounded">
-                {JSON.stringify(session, null, 2)}
-              </pre>
-            </div>
-          ) : session.status === 'fail' ? (
-            <div className="row filter-row">
-              <h1>Your payment Failed</h1>
-              <h4>View CheckoutSession response:</h4>
-              <pre className="mt-3 p-3 bg-light rounded">
-                {JSON.stringify(session, null, 2)}
-              </pre>
-              <button 
-                onClick={() => window.location.href = '/prescriptions'} 
-                className="btn btn-primary mt-3"
-              >
-                Return to Prescriptions
-              </button>
-            </div>
-          ) : (
-            <div className="row filter-row">
-              <h1>Processing your payment...</h1>
-              <h4>Please wait while we verify your payment status.</h4>
-            </div>
-          )}
-        </div>
-      </div>
-    </Box>
-  );
 };
 
 export default Success;

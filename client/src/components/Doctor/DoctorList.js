@@ -67,7 +67,7 @@ function DoctorList() {
     const getdoctors = useCallback(async () => {
         setLoading(true);
         try {
-            const response = await axios.get("https://hospital-management-system-2-dni5.onrender.com/doctors", {
+            const response = await axios.get("http://localhost:5000/doctors", {
                 headers: {
                     authorization: `Bearer ${localStorage.getItem("token")}`
                 }
@@ -111,7 +111,7 @@ function DoctorList() {
     const deleteDoctor = async (id) => {
         if (window.confirm("Are you sure you want to delete this doctor?")) {
             try {
-                await axios.delete(`https://hospital-management-system-2-dni5.onrender.com/doctors/${id}`, {
+                await axios.delete(`http://localhost:5000/doctors/${id}`, {
                     headers: {
                         authorization: `Bearer ${localStorage.getItem("token")}`
                     }

@@ -8,7 +8,7 @@
 
 /* Welcome Banner */
 #welcomeBanner {
-    background: linear-gradient(135deg, rgb(49, 179, 114) 0%, rgb(39, 149, 94) 100%);
+    background: linear-gradient(135deg, rgb(46, 86, 66) 0%, rgb(75, 129, 102) 100%);
     border-radius: 16px;
     padding: 40px;
     margin-bottom: 40px;
@@ -162,7 +162,7 @@
 .widgetTitle2 i,
 .widgetTitle3 i,
 .widgetTitle4 i {
-    color: rgb(49, 179, 114);
+    color: rgb(62, 129, 95);
     margin-left: 5px;
 }
 
@@ -177,7 +177,7 @@
 .appointmentTableTd .avatar {
     width: 50px;
     height: 50px;
-    background: linear-gradient(135deg, rgb(49, 179, 114) 0%, rgb(39, 149, 94) 100%);
+    background: linear-gradient(135deg, rgb(58, 108, 83) 0%, rgb(39, 149, 94) 100%);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -335,7 +335,7 @@
 }
 
 .topicHeader {
-    background: linear-gradient(135deg, rgb(49, 179, 114) 0%, rgb(39, 149, 94) 100%);
+    background: linear-gradient(135deg, rgb(61, 119, 90) 0%, rgb(39, 149, 94) 100%);
     padding: 20px;
 }
 
@@ -418,14 +418,14 @@
 }
 
 .btn-primary:hover {
-    background: rgb(39, 149, 94);
+    background: rgb(39, 80, 59);
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(49, 179, 114, 0.3);
 }
 
 .btn-outline-primary {
-    border: 2px solid rgb(49, 179, 114);
-    color: rgb(49, 179, 114);
+    border: 2px solid rgb(38, 86, 62);
+    color: rgb(45, 94, 70);
     background: transparent;
     padding: 6px 16px;
     border-radius: 8px;
@@ -433,7 +433,7 @@
 }
 
 .btn-outline-primary:hover {
-    background: rgb(49, 179, 114);
+    background: rgb(57, 111, 84);
     color: white;
     transform: translateY(-2px);
 }

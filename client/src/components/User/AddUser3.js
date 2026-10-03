@@ -62,7 +62,7 @@ function AddUser() {
     };
     
     try {
-      const response = await fetch('https://hospital-management-system-2-dni5.onrender.com/users', {
+      const response = await fetch('http://localhost:5000/users', {
         method: "POST",
         headers: {
           'Content-Type': 'application/json',

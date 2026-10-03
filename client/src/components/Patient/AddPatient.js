@@ -119,7 +119,7 @@ function AddPatient() {
         dob: dob
       };
       
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'https://hospital-management-system-2-dni5.onrender.com'}/patients`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/patients`, {
         method: "POST",
         headers: {
           'Content-Type': 'application/json',

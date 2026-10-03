@@ -202,8 +202,8 @@ function Addmedicine() {
         company: company.trim(),
         totalValue: parseFloat(price) * parseInt(quantity)
       };
-      
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'https://hospital-management-system-2-dni5.onrender.com'}/medicines`, {
+      console.log("DATA BEING SENT:", medicine);
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/medicines`, {
         method: "POST",
         headers: {
           'Content-Type': 'application/json',
@@ -215,9 +215,16 @@ function Addmedicine() {
       
       const data = await response.json();
       
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to add medicine');
-      }
+     if (!response.ok) {
+    console.log("STATUS:", response.status);
+    console.log("BACKEND RESPONSE:", data);
+
+    throw new Error(
+        data.errors?.join(", ") ||
+        data.message ||
+        "Failed to add medicine"
+    );
+}
       
       if (data.message === "success") {
         setSuccessSnackbar(true);

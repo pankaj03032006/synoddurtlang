@@ -29,7 +29,7 @@ function ForgotPassword() {
         setMessage('');
 
         try {
-            const response = await axios.post('https://hospital-management-system-2-dni5.onrender.com/forgot-password', { 
+            const response = await axios.post('http://localhost:5000/forgot-password', { 
                 email 
             });
             
@@ -65,7 +65,7 @@ function ForgotPassword() {
         setMessage('');
 
         try {
-            const response = await axios.post('https://hospital-management-system-2-dni5.onrender.com/reset-password', {
+            const response = await axios.post('http://localhost:5000/reset-password', {
                 email,
                 otp,
                 newPassword

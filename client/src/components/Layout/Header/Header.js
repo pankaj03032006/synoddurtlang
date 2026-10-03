@@ -119,7 +119,7 @@ const Header = ({ open, handleDrawerOpen, headerTitle }) => {
       case 'Admin':
         return "#dc3545";
       case 'Doctor':
-        return "#28a745";
+        return "#c9e955";
       case 'Patient':
         return "#17a2b8";
       default:

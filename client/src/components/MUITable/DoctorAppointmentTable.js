@@ -104,46 +104,51 @@ export default function DoctorAppointmentTable({
         }
     };
 
-    const prescriptionFormSubmitted = async (event, formData) => {
-        event.preventDefault();
-        
-        setPrescriptionLoading(true);
-        
-        try {
-            const reqObj = {
-                appointmentId: appointmentId,
-                remarks: formData?.remarks || '',
-                medicines: formData?.medicines || []
-            };
-            
-            const response = await axios.post(
-                `${process.env.REACT_APP_API_URL || 'https://hospital-management-system-2-dni5.onrender.com'}/prescriptions`,
-                reqObj,
-                {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        authorization: `Bearer ${localStorage.getItem("token")}`
-                    }
+   const prescriptionFormSubmitted = async (event, formData) => {
+    event.preventDefault();
+
+    setPrescriptionLoading(true);
+
+    try {
+        // PrescriptionForm already builds the correct body:
+        // { appointmentId, remarks, prescribedMed: [...] }
+        // Send it as-is — don't rename the fields.
+        const response = await axios.post(
+            `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/prescription`,
+            formData,
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    authorization: `Bearer ${localStorage.getItem("token")}`
                 }
-            );
-            
-            if (response.data.message === "success") {
-                setSuccessMessage("Prescription saved successfully!");
-                setSuccessSnackbar(true);
-                if (getBookedSlots) await getBookedSlots();
-                handlePrescriptionFormClose();
-            } else {
-                setErrorMessage(response.data.message || "Failed to save prescription");
-                setErrorSnackbar(true);
             }
-        } catch (error) {
-            console.error("Error saving prescription:", error);
-            setErrorMessage(error.response?.data?.message || "Network error. Please try again.");
+        );
+
+        if (response.data.message === "success") {
+            setSuccessMessage("Prescription saved successfully!");
+            setSuccessSnackbar(true);
+            if (getBookedSlots) await getBookedSlots();
+            handlePrescriptionFormClose();
+        } else {
+            setErrorMessage(
+                response.data.errors?.join(", ") ||
+                response.data.message ||
+                "Failed to save prescription"
+            );
             setErrorSnackbar(true);
-        } finally {
-            setPrescriptionLoading(false);
         }
-    };
+    } catch (error) {
+        console.error("Error saving prescription:", error);
+        setErrorMessage(
+            error.response?.data?.errors?.join(", ") ||
+            error.response?.data?.message ||
+            "Network error. Please try again."
+        );
+        setErrorSnackbar(true);
+    } finally {
+        setPrescriptionLoading(false);
+    }
+};
 
     const handleChangePage = (event, newPage) => {
         setPage(newPage);

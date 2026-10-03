@@ -28,7 +28,7 @@
     vertical-align: middle !important;
     background: white;
     padding: 20px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgba(245, 242, 242, 0.911);
 }
 
 #slotCreationDiv {
@@ -39,7 +39,7 @@
     background: white;
     padding: 25px;
     border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgba(247, 246, 246, 0.951);
 }
 
 #appointmentMain h4 {
@@ -66,7 +66,7 @@
     transform: scale(1.05);
     background-color: rgb(49, 179, 114);
     color: white;
-    box-shadow: 0 4px 12px rgba(49, 179, 114, 0.3);
+    box-shadow: 0 4px 12px rgba(252, 254, 253, 0.967);
 }
 
 /* Available Slots Header */
@@ -107,7 +107,7 @@
 #slotCreationDiv input[type="date"]:focus {
     border-color: rgb(49, 179, 114);
     outline: none;
-    box-shadow: 0 0 0 2px rgba(49, 179, 114, 0.1);
+    box-shadow: 0 0 0 2px rgba(249, 251, 250, 0.925);
 }
 
 /* Checkbox Styling for Time Slots */
@@ -130,7 +130,7 @@
 #slotCreationDiv .form-check-label {
     cursor: pointer;
     font-weight: normal;
-    color: #555;
+    color: #f7f4f4f2;
 }
 
 /* Submit Button */
@@ -146,7 +146,7 @@
 #slotCreationDiv input[type="submit"]:hover {
     background-color: rgb(39, 149, 94);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(49, 179, 114, 0.3);
+    box-shadow: 0 4px 12px rgba(240, 244, 242, 0.921);
 }
 
 /* Loading State */
@@ -299,7 +299,7 @@
     overflow-x: auto;
     margin-top: 20px;
     border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgba(244, 243, 243, 0.888);
 }
 
 /* Badge/Slot Status */

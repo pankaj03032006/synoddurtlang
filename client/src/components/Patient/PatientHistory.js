@@ -31,7 +31,7 @@ function PatientHistory() {
   const getPatientById = useCallback(async () => {
     try {
       setFetchLoading(true);
-      const response = await axios.get(`${process.env.REACT_APP_API_URL || 'https://hospital-management-system-2-dni5.onrender.com'}/patients/${id}`, {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/patients/${id}`, {
         headers: {
           authorization: `Bearer ${localStorage.getItem("token")}`
         }
@@ -72,7 +72,7 @@ function PatientHistory() {
     setLoading(true);
     
     try {
-      const response = await axios.get(`${process.env.REACT_APP_API_URL || 'https://hospital-management-system-2-dni5.onrender.com'}/patients/history/${patientId}`, {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/patients/history/${patientId}`, {
         headers: {
           authorization: `Bearer ${localStorage.getItem("token")}`
         }

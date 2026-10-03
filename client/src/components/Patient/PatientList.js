@@ -27,7 +27,7 @@ function PatientList() {
     const getPatients = useCallback(async () => {
         setLoading(true);
         try {
-            const response = await axios.get("https://hospital-management-system-2-dni5.onrender.com/patients", {
+            const response = await axios.get("http://localhost:5000/patients", {
                 params: {
                     name: name
                 }
@@ -49,7 +49,7 @@ function PatientList() {
 
     const deletePatient = async (id) => {
         try {
-            await axios.delete(`https://hospital-management-system-2-dni5.onrender.com/patients/${id}`);
+            await axios.delete(`http://localhost:5000/patients/${id}`);
             await getPatients();
         } catch (error) {
             const errorMessage = error.response?.data?.message || error.message || "Failed to delete patient";

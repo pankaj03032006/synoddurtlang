@@ -298,7 +298,7 @@ export default function Sidebar({ open, handleDrawerClose, handleDrawerOpen }) {
             onMouseLeave={handleDrawerClose}
             PaperProps={{ 
                 sx: { 
-                    backgroundColor: '#31b372', 
+                    backgroundColor: '#133122', 
                     color: 'white',
                     border: 'none',
                     boxShadow: '2px 0 8px rgba(0, 0, 0, 0.1)',
