@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
     Box, Card, CardContent, Typography, TextField, Button, Alert,
     Accordion, AccordionSummary, AccordionDetails,
-    Snackbar, CircularProgress, Divider, Chip, Stack,
+    Snackbar, CircularProgress, Divider, Chip,
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import EmailIcon from '@mui/icons-material/Email';

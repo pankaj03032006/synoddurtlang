@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import {
     Box, Card, CardContent, Typography, Button, TextField, MenuItem,
-    FormControl, InputLabel, Select, Checkbox, FormControlLabel, Alert,
-    Snackbar, CircularProgress, Divider, Chip, Stack, Tooltip,
+    FormControl, InputLabel, Select, Alert,
+    Snackbar, CircularProgress, Divider, Chip, Tooltip,
 } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import EventAvailableIcon from '@mui/icons-material/EventAvailable';
