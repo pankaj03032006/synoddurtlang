@@ -7,11 +7,11 @@ import {
     Divider, Avatar,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import SearchIcon from '@mui/icons-material/Search';
+
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
 import EventAvailableIcon from '@mui/icons-material/EventAvailable';
 import AssignmentIcon from '@mui/icons-material/Assignment';
-import VisibilityIcon from '@mui/icons-material/Visibility';
+
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';

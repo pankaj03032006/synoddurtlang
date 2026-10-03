@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { NavLink } from 'react-router-dom';
+
 import {
     Paper, Table, TableBody, TableCell, TableContainer, TableHead,
     TablePagination, TableRow, Tooltip, CircularProgress, Alert,
@@ -317,7 +317,7 @@ export default function AppointmentTable({
                                     const apt = row.appointmentData || {};
                                     const firstName = apt.patientId?.userId?.firstName || '';
                                     const lastName = apt.patientId?.userId?.lastName || '';
-                                    const patientPID = apt.patientId?._id || '';
+                                    
 
                                     return (
                                         <TableRow
