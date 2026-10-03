@@ -1,317 +1,500 @@
-import React, { useEffect, useState, useContext, useCallback } from 'react';
+import React, { useEffect, useState, useContext, useCallback, useMemo } from 'react';
 import { useNavigate } from "react-router-dom";
-import ErrorDialogueBox from '../MUIDialogueBox/ErrorDialogueBox';
+import {
+    Box, Card, CardContent, Typography, TextField, Button, Alert,
+    CircularProgress, Divider, Avatar, Chip, Stack, InputAdornment,
+    IconButton, Snackbar, Skeleton, MenuItem,
+} from '@mui/material';
+import Grid2 from '@mui/material/Grid';
+import {
+    Person, Lock, Email, Badge, Save, Visibility, VisibilityOff,
+    CheckCircle, Error as ErrorIcon, LocalHospital, Phone, WorkOutline,
+} from '@mui/icons-material';
 import axios from "axios";
-import Box from '@mui/material/Box';
-import { UserContext } from '../../Context/UserContext'
+import { UserContext } from '../../Context/UserContext';
+
+const API = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const GREEN = '#2a5841';
+const GREEN_DARK = '#2c6648';
+
+const DEPARTMENTS = ['Cardiology', 'Gynecology', 'Hematology'];
+
+const getInitials = (first, last) => {
+    const a = (first || '').trim().charAt(0).toUpperCase();
+    const b = (last || '').trim().charAt(0).toUpperCase();
+    return `${a}${b}` || '?';
+};
+
+const passwordStrength = (pwd) => {
+    if (!pwd) return { score: 0, label: '', color: '#ddd' };
+    let score = 0;
+    if (pwd.length >= 6) score++;
+    if (pwd.length >= 10) score++;
+    if (/[A-Z]/.test(pwd)) score++;
+    if (/[0-9]/.test(pwd)) score++;
+    if (/[^A-Za-z0-9]/.test(pwd)) score++;
+
+    const map = [
+        { label: 'Very weak', color: '#e53935' },
+        { label: 'Weak', color: '#fb8c00' },
+        { label: 'Fair', color: '#fdd835' },
+        { label: 'Good', color: '#7cb342' },
+        { label: 'Strong', color: GREEN },
+    ];
+    return { score, ...map[Math.min(score, 4)] };
+};
 
 function DoctorProfile() {
     const navigate = useNavigate();
     const { currentUser } = useContext(UserContext);
+
+    const [doctorId, setDoctorId] = useState('');
+    const [userId, setUserId] = useState('');
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [email, setEmail] = useState('');
     const [username, setUsername] = useState('');
+    const [phone, setPhone] = useState('');
     const [department, setDepartment] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [phone, setPhone] = useState('');
-    const [userId, setUserId] = useState('');
-    const [doctorId, setDoctorId] = useState('');
-    const [passwordMatchDisplay, setPasswordMatchDisplay] = useState('none');
-    const [passwordValidationMessage, setPasswordValidationMessage] = useState('');
-    const [loading, setLoading] = useState(false);
+
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirm, setShowConfirm] = useState(false);
+
+    const [loading, setLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [snack, setSnack] = useState({ open: false, severity: 'success', message: '' });
 
-    const [errorDialogueBoxOpen, setErrorDialogueBoxOpen] = useState(false);
-    const [errorList, setErrorList] = useState([]);
-    
-    const handleDialogueOpen = () => {
-        setErrorDialogueBoxOpen(true)
-    };
-    
-    const handleDialogueClose = () => {
-        setErrorList([]);
-        setErrorDialogueBoxOpen(false)
-    };
+    const notify = (severity, message) =>
+        setSnack({ open: true, severity, message });
 
+    // ---------- FETCH ----------
     const getDoctorById = useCallback(async () => {
         if (!currentUser?.userId) {
-            const errorMessage = "User information not available";
-            setErrorList([errorMessage]);
-            handleDialogueOpen();
+            notify('error', 'User information not available.');
+            setLoading(false);
             return;
         }
 
         setLoading(true);
         try {
-            let doctorUserId = currentUser.userId;
-            const response = await axios.get(`http://localhost:5000/profile/doctor/${doctorUserId}`, {
-                headers: {
-                    authorization: `Bearer ${localStorage.getItem("token")}`
-                }
-            });
-            
-            setDoctorId(response.data._id);
-            setFirstName(response.data.userId?.firstName || '');
-            setLastName(response.data.userId?.lastName || '');
-            setEmail(response.data.userId?.email || '');
-            setUsername(response.data.userId?.username || '');
-            setPassword(response.data.userId?.password || '');
-            setConfirmPassword(response.data.userId?.password || '');
-            setPhone(response.data.phone || '');
-            setDepartment(response.data.department || '');
-            setUserId(response.data.userId?._id || '');
+            const { data } = await axios.get(
+                `${API}/profile/doctor/${currentUser.userId}`,
+                { headers: { authorization: `Bearer ${localStorage.getItem("token")}` } }
+            );
+
+            setDoctorId(data._id || '');
+            setUserId(data.userId?._id || '');
+            setFirstName(data.userId?.firstName || '');
+            setLastName(data.userId?.lastName || '');
+            setEmail(data.userId?.email || '');
+            setUsername(data.userId?.username || '');
+            setPhone(data.phone || '');
+            setDepartment(data.department || '');
+            // 🚨 Do NOT preload password — it's a hash, not the plain value.
+            // Leave blank; user only types if they want to change it.
         } catch (error) {
             console.error("Error fetching doctor profile:", error);
-            const errorMessage = error.response?.data?.message || error.message || "Failed to fetch doctor profile";
-            setErrorList([errorMessage]);
-            handleDialogueOpen();
+            notify(
+                'error',
+                error.response?.data?.message ||
+                error.message ||
+                "Failed to fetch doctor profile."
+            );
         } finally {
             setLoading(false);
         }
     }, [currentUser]);
 
+    useEffect(() => {
+        getDoctorById();
+    }, [getDoctorById]);
+
+    // ---------- SUBMIT ----------
     const updateDoctorUser = async (e) => {
         e.preventDefault();
-        
-        if (password !== confirmPassword) {
-            setErrorList(["Password and Confirm Password do not match"]);
-            handleDialogueOpen();
-            return;
+
+        const wantsPasswordChange = password.length > 0 || confirmPassword.length > 0;
+
+        if (wantsPasswordChange) {
+            if (password !== confirmPassword) {
+                notify('error', 'Password and Confirm Password do not match.');
+                return;
+            }
+            if (password.trim().length <= 6) {
+                notify('error', 'Password must be more than 6 characters.');
+                return;
+            }
         }
-        
-        if (password && password.trim().length > 0 && password.trim().length <= 6) {
-            setErrorList(["Password length must be greater than 6 characters"]);
-            handleDialogueOpen();
-            return;
-        }
-        
+
         setIsSubmitting(true);
-        
+
         try {
-            await axios.patch(`http://localhost:5000/profile/doctor/${doctorId}`, {
+            const payload = {
                 firstName,
                 lastName,
                 username,
                 email,
                 phone,
-                password: password || undefined,
-                confirmPassword: confirmPassword || undefined,
                 department,
-                userId
-            }, {
-                headers: {
-                    authorization: `Bearer ${localStorage.getItem("token")}`
-                }
-            });
-            navigate("/profile");
+                userId,
+            };
+
+            // Only include password fields when the user is changing it
+            if (wantsPasswordChange) {
+                payload.password = password;
+                payload.confirmPassword = confirmPassword;
+            }
+
+            await axios.patch(
+                `${API}/profile/doctor/${doctorId}`,
+                payload,
+                { headers: { authorization: `Bearer ${localStorage.getItem("token")}` } }
+            );
+
+            setPassword('');
+            setConfirmPassword('');
+
+            notify('success', 'Profile updated successfully.');
         } catch (error) {
             console.error("Update error:", error);
-            if (error.response?.data?.errors) {
-                setErrorList(error.response.data.errors);
-            } else if (error.response?.data?.message) {
-                setErrorList([error.response.data.message]);
-            } else {
-                setErrorList([error.message || "Failed to update profile"]);
-            }
-            handleDialogueOpen();
+            const errors =
+                error.response?.data?.errors ||
+                (error.response?.data?.message ? [error.response.data.message] : null) ||
+                [error.message || "Failed to update profile"];
+            notify('error', errors.join(', '));
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    useEffect(() => {
-        if (password && password.trim().length > 0 && password.trim().length <= 6) {
-            setPasswordValidationMessage('Password Length must be greater than 6 characters');
-        } else {
-            setPasswordValidationMessage('');
-        }
-        
-        if (password === confirmPassword) {
-            setPasswordMatchDisplay('none');
-        } else {
-            setPasswordMatchDisplay('block');
-        }
-    }, [password, confirmPassword]);
+    const fullName = `Dr. ${firstName} ${lastName}`.trim() || 'Doctor';
+    const strength = useMemo(() => passwordStrength(password), [password]);
+    const mismatch = confirmPassword.length > 0 && password !== confirmPassword;
 
-    useEffect(() => {
-        getDoctorById();
-    }, [getDoctorById]);
-
+    // ---------- LOADING ----------
     if (loading) {
         return (
-            <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
-                <div className="page-wrapper">
-                    <div className="content">
-                        <div className="text-center p-4">
-                            <div className="spinner-border text-primary" role="status">
-                                <span className="sr-only">Loading...</span>
-                            </div>
-                            <p>Loading profile...</p>
-                        </div>
-                    </div>
-                </div>
+            <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 900, mx: 'auto' }}>
+                <Skeleton variant="text" width={220} height={48} />
+                <Skeleton variant="rectangular" height={110} sx={{ borderRadius: 3, my: 3 }} />
+                <Skeleton variant="rectangular" height={620} sx={{ borderRadius: 3 }} />
             </Box>
         );
     }
 
+    // ---------- UI ----------
     return (
-        <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
-            <div className="page-wrapper">
-                <div className="content">
-                    <div className="card-box">
-                        <div className="row">
-                            <div className="col-lg-8 offset-lg-2">
-                                <h3 className="page-title">Update Profile</h3>
-                            </div>
-                        </div>
-                        <div className="row">
-                            <div className="col-lg-8 offset-lg-2">
-                                <form id="editdoctorForm" name='editdoctorForm' onSubmit={updateDoctorUser}>
-                                    <div className="row">
-                                        <div className="col-sm-6">
-                                            <div className="form-group">
-                                                <label>First Name <span className="text-danger">*</span></label>
-                                                <input 
-                                                    name="firstName" 
-                                                    className="form-control" 
-                                                    type="text" 
-                                                    required 
-                                                    value={firstName} 
-                                                    onChange={(event) => setFirstName(event.target.value)}
-                                                    disabled={isSubmitting}
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="col-sm-6">
-                                            <div className="form-group">
-                                                <label>Last Name</label>
-                                                <input 
-                                                    name="lastName" 
-                                                    className="form-control" 
-                                                    type="text" 
-                                                    required 
-                                                    value={lastName} 
-                                                    onChange={(event) => setLastName(event.target.value)}
-                                                    disabled={isSubmitting}
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="col-sm-6">
-                                            <div className="form-group">
-                                                <label>Username <span className="text-danger">*</span></label>
-                                                <input 
-                                                    name="username" 
-                                                    className="form-control" 
-                                                    type="text" 
-                                                    required 
-                                                    value={username} 
-                                                    onChange={(event) => setUsername(event.target.value)}
-                                                    disabled={isSubmitting}
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="col-sm-6">
-                                            <div className="form-group">
-                                                <label>Email <span className="text-danger">*</span></label>
-                                                <input 
-                                                    name="email" 
-                                                    className="form-control" 
-                                                    type="email" 
-                                                    required 
-                                                    value={email} 
-                                                    onChange={(event) => setEmail(event.target.value)}
-                                                    disabled={isSubmitting}
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="col-sm-6">
-                                            <div className="form-group">
-                                                <label>Password</label>
-                                                <input 
-                                                    name="password" 
-                                                    className="form-control" 
-                                                    type="password" 
-                                                    value={password} 
-                                                    onChange={(event) => setPassword(event.target.value)}
-                                                    disabled={isSubmitting}
-                                                />
-                                                {passwordValidationMessage && (
-                                                    <small className="text-danger">{passwordValidationMessage}</small>
-                                                )}
-                                            </div>
-                                        </div>
-                                        <div className="col-sm-6">
-                                            <div className="form-group">
-                                                <label>Confirm Password</label>
-                                                <input 
-                                                    name="confirmPassword" 
-                                                    className="form-control" 
-                                                    type="password" 
-                                                    value={confirmPassword} 
-                                                    onChange={(event) => setConfirmPassword(event.target.value)}
-                                                    disabled={isSubmitting}
-                                                />
-                                                <small className="text-danger" style={{ display: passwordMatchDisplay }}>
-                                                    Passwords do not match
-                                                </small>
-                                            </div>
-                                        </div>
-                                        <div className="col-sm-6">
-                                            <div className="form-group">
-                                                <label>Phone </label>
-                                                <input 
-                                                    name="phone" 
-                                                    className="form-control" 
-                                                    type="text" 
-                                                    value={phone} 
-                                                    onChange={(event) => setPhone(event.target.value)}
-                                                    disabled={isSubmitting}
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="col-sm-6">
-                                            <div className="form-group">
-                                                <label>Department</label>
-                                                <select 
-                                                    disabled 
-                                                    name="department" 
-                                                    className="form-select" 
-                                                    value={department} 
-                                                    onChange={(event) => setDepartment(event.target.value)}
-                                                >
-                                                    <option value="Cardiology">Cardiology</option>
-                                                    <option value="Gynecology">Gynecology</option>
-                                                    <option value="Hematology">Hematology</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
+        <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 900, mx: 'auto' }}>
+            {/* Header */}
+            <Box sx={{ mb: 3 }}>
+                <Typography variant="h4" fontWeight={700} gutterBottom>
+                    Update Profile
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                    Manage your professional details and account security.
+                </Typography>
+            </Box>
 
-                                    <div className="m-t-20 text-center">
-                                        <button 
-                                            type="submit" 
-                                            className="btn btn-primary submit-btn"
-                                            disabled={isSubmitting || loading}
+            {/* Profile banner */}
+            <Card
+                elevation={0}
+                sx={{
+                    mb: 3,
+                    borderRadius: 3,
+                    background: `linear-gradient(135deg, ${GREEN} 0%, ${GREEN_DARK} 100%)`,
+                    color: '#fff',
+                }}
+            >
+                <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2.5, flexWrap: 'wrap' }}>
+                    <Avatar
+                        sx={{
+                            width: 72, height: 72,
+                            bgcolor: 'rgba(255,255,255,0.2)',
+                            fontSize: 26, fontWeight: 700,
+                            border: '2px solid rgba(255,255,255,0.5)',
+                        }}
+                    >
+                        {getInitials(firstName, lastName)}
+                    </Avatar>
+                    <Box sx={{ flex: 1, minWidth: 200 }}>
+                        <Typography variant="h5" fontWeight={700}>
+                            {fullName}
+                        </Typography>
+                        <Stack direction="row" spacing={1} sx={{ mt: 0.5, flexWrap: 'wrap' }}>
+                            {department && (
+                                <Chip
+                                    icon={<LocalHospital sx={{ color: '#fff !important' }} />}
+                                    label={department}
+                                    size="small"
+                                    sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: '#fff' }}
+                                />
+                            )}
+                            {email && (
+                                <Chip
+                                    icon={<Email sx={{ color: '#fff !important' }} />}
+                                    label={email}
+                                    size="small"
+                                    sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: '#fff' }}
+                                />
+                            )}
+                        </Stack>
+                    </Box>
+                </CardContent>
+            </Card>
+
+            {/* Form */}
+            <Card elevation={0} sx={{ borderRadius: 3, border: '1px solid #eee' }}>
+                <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                        <Person sx={{ color: GREEN }} />
+                        <Typography variant="h6" fontWeight={700}>
+                            Account Details
+                        </Typography>
+                    </Box>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                        Leave password fields blank to keep your current password.
+                    </Typography>
+                    <Divider sx={{ mb: 3 }} />
+
+                    <form onSubmit={updateDoctorUser}>
+                        <Grid2 container spacing={2}>
+                            <Grid2 item xs={12} sm={6}>
+                                <TextField
+                                    label="First Name"
+                                    value={firstName}
+                                    onChange={(e) => setFirstName(e.target.value)}
+                                    required
+                                    fullWidth
+                                    size="small"
+                                    disabled={isSubmitting}
+                                />
+                            </Grid2>
+                            <Grid2 item xs={12} sm={6}>
+                                <TextField
+                                    label="Last Name"
+                                    value={lastName}
+                                    onChange={(e) => setLastName(e.target.value)}
+                                    required
+                                    fullWidth
+                                    size="small"
+                                    disabled={isSubmitting}
+                                />
+                            </Grid2>
+
+                            <Grid2 item xs={12} sm={6}>
+                                <TextField
+                                    label="Username"
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value)}
+                                    required
+                                    fullWidth
+                                    size="small"
+                                    disabled={isSubmitting}
+                                    InputProps={{
+                                        startAdornment: (
+                                            <InputAdornment position="start">
+                                                <Badge fontSize="small" />
+                                            </InputAdornment>
+                                        ),
+                                    }}
+                                />
+                            </Grid2>
+                            <Grid2 item xs={12} sm={6}>
+                                <TextField
+                                    label="Email"
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    required
+                                    fullWidth
+                                    size="small"
+                                    disabled={isSubmitting}
+                                    InputProps={{
+                                        startAdornment: (
+                                            <InputAdornment position="start">
+                                                <Email fontSize="small" />
+                                            </InputAdornment>
+                                        ),
+                                    }}
+                                />
+                            </Grid2>
+
+                            <Grid2 item xs={12} sm={6}>
+                                <TextField
+                                    label="Phone"
+                                    value={phone}
+                                    onChange={(e) => setPhone(e.target.value)}
+                                    fullWidth
+                                    size="small"
+                                    disabled={isSubmitting}
+                                    InputProps={{
+                                        startAdornment: (
+                                            <InputAdornment position="start">
+                                                <Phone fontSize="small" />
+                                            </InputAdornment>
+                                        ),
+                                    }}
+                                />
+                            </Grid2>
+                            <Grid2 item xs={12} sm={6}>
+                                <TextField
+                                    select
+                                    label="Department"
+                                    value={department}
+                                    onChange={(e) => setDepartment(e.target.value)}
+                                    fullWidth
+                                    size="small"
+                                    disabled
+                                    helperText="Department cannot be changed here"
+                                    InputProps={{
+                                        startAdornment: (
+                                            <InputAdornment position="start">
+                                                <WorkOutline fontSize="small" />
+                                            </InputAdornment>
+                                        ),
+                                    }}
+                                >
+                                    {DEPARTMENTS.map((d) => (
+                                        <MenuItem key={d} value={d}>{d}</MenuItem>
+                                    ))}
+                                </TextField>
+                            </Grid2>
+                        </Grid2>
+
+                        <Divider sx={{ my: 3 }}>
+                            <Chip
+                                label="Change Password (optional)"
+                                size="small"
+                                icon={<Lock sx={{ fontSize: 16 }} />}
+                                sx={{ bgcolor: 'rgba(49,179,114,0.1)', color: GREEN_DARK }}
+                            />
+                        </Divider>
+
+                        <TextField
+                            label="New Password"
+                            type={showPassword ? 'text' : 'password'}
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            fullWidth
+                            size="small"
+                            disabled={isSubmitting}
+                            placeholder="Leave blank to keep current"
+                            InputProps={{
+                                endAdornment: (
+                                    <InputAdornment position="end">
+                                        <IconButton
+                                            size="small"
+                                            onClick={() => setShowPassword((s) => !s)}
+                                            edge="end"
                                         >
-                                            {isSubmitting ? 'Updating...' : 'Update Profile'}
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <ErrorDialogueBox
-                    open={errorDialogueBoxOpen}
-                    handleToClose={handleDialogueClose}
-                    ErrorTitle="Error: Edit Doctor"
-                    ErrorList={errorList}
-                />
-            </div>
+                                            {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                                        </IconButton>
+                                    </InputAdornment>
+                                ),
+                            }}
+                        />
+
+                        {password && (
+                            <Box sx={{ mt: 1 }}>
+                                <Box sx={{ height: 6, borderRadius: 3, bgcolor: '#eee', overflow: 'hidden' }}>
+                                    <Box
+                                        sx={{
+                                            height: '100%',
+                                            width: `${(strength.score / 4) * 100}%`,
+                                            bgcolor: strength.color,
+                                            transition: 'width 0.3s ease, background-color 0.3s ease',
+                                        }}
+                                    />
+                                </Box>
+                                <Typography
+                                    variant="caption"
+                                    sx={{ color: strength.color, fontWeight: 600, mt: 0.5, display: 'block' }}
+                                >
+                                    {strength.label}
+                                </Typography>
+                            </Box>
+                        )}
+
+                        <TextField
+                            label="Confirm Password"
+                            type={showConfirm ? 'text' : 'password'}
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            fullWidth
+                            size="small"
+                            disabled={isSubmitting}
+                            error={mismatch}
+                            helperText={mismatch ? 'Passwords do not match' : ' '}
+                            sx={{ mt: 2 }}
+                            InputProps={{
+                                endAdornment: (
+                                    <InputAdornment position="end">
+                                        <IconButton
+                                            size="small"
+                                            onClick={() => setShowConfirm((s) => !s)}
+                                            edge="end"
+                                        >
+                                            {showConfirm ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                                        </IconButton>
+                                    </InputAdornment>
+                                ),
+                            }}
+                        />
+
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1.5, mt: 3 }}>
+                            <Button
+                                variant="outlined"
+                                color="inherit"
+                                onClick={() => navigate(-1)}
+                                disabled={isSubmitting}
+                                sx={{ textTransform: 'none' }}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                type="submit"
+                                variant="contained"
+                                disabled={isSubmitting}
+                                startIcon={
+                                    isSubmitting
+                                        ? <CircularProgress size={16} color="inherit" />
+                                        : <Save />
+                                }
+                                sx={{
+                                    backgroundColor: GREEN,
+                                    '&:hover': { backgroundColor: GREEN_DARK },
+                                    textTransform: 'none',
+                                    px: 3,
+                                }}
+                            >
+                                {isSubmitting ? 'Updating...' : 'Update Profile'}
+                            </Button>
+                        </Box>
+                    </form>
+                </CardContent>
+            </Card>
+
+            {/* Snackbar */}
+            <Snackbar
+                open={snack.open}
+                autoHideDuration={4000}
+                onClose={() => setSnack((s) => ({ ...s, open: false }))}
+                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+            >
+                <Alert
+                    severity={snack.severity}
+                    icon={snack.severity === 'success' ? <CheckCircle /> : <ErrorIcon />}
+                    onClose={() => setSnack((s) => ({ ...s, open: false }))}
+                    elevation={6}
+                    sx={{ borderRadius: 2 }}
+                >
+                    {snack.message}
+                </Alert>
+            </Snackbar>
         </Box>
-    )
+    );
 }
 
 export default DoctorProfile;

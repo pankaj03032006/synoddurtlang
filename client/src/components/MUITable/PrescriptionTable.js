@@ -24,7 +24,7 @@ function createData(patientName, doctorName, appointmentDate, appointmentTime, p
 
 export default function PrescriptionTable({ prescriptionList, loading: propLoading }) {
     const { currentUser } = useContext(UserContext);
-    
+
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(5);
     const [paymentLoading, setPaymentLoading] = useState(false);
@@ -76,12 +76,12 @@ export default function PrescriptionTable({ prescriptionList, loading: propLoadi
         if (!prescribedMed || prescribedMed.length === 0) {
             return <span style={{ color: '#999' }}>No medicines prescribed</span>;
         }
-        
+
         return (
             <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
                 {prescribedMed.map((pre, index) => (
-                    <div key={pre._id || index} style={{ 
-                        marginBottom: '10px', 
+                    <div key={pre._id || index} style={{
+                        marginBottom: '10px',
                         paddingBottom: '10px',
                         borderBottom: index < prescribedMed.length - 1 ? '1px solid #eee' : 'none'
                     }}>
@@ -98,38 +98,130 @@ export default function PrescriptionTable({ prescriptionList, loading: propLoadi
         );
     };
 
+    // --------------------------------------------------
+    // PAYMENT — Razorpay
+    // --------------------------------------------------
     const handlePayment = async (prescriptionId) => {
         setPaymentLoading(true);
-        
+
         try {
-            const apiSetQrcode = `${process.env.REACT_APP_SERVER_URL || 'http://localhost:5000'}/api/paypal/payment`;
-            const response = await fetch(apiSetQrcode, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    value: prescriptionId,
-                }),
-            });
-            
-            if (response.ok) {
-                const json = await response.json();
-                window.location.assign(json.link);
-            } else {
-                throw new Error('Payment initialization failed');
+            // 1. Ask the backend to create a Razorpay order for this prescription
+            const orderRes = await axios.post(
+                `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/payment/create-order`,
+                { prescriptionId },
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        authorization: `Bearer ${localStorage.getItem("token")}`,
+                    },
+                }
+            );
+
+            if (!orderRes.data?.success) {
+                throw new Error(orderRes.data?.message || "Failed to create payment order");
             }
+
+            const { order, key_id } = orderRes.data;
+
+            // 2. Configure Razorpay Checkout
+            const options = {
+                key: key_id,
+                amount: order.amount,             // in paise, sent by backend
+                currency: order.currency,
+                name: "Synod Hospital",
+                description: `Payment for Prescription`,
+                order_id: order.id,
+
+                // 3. On successful payment, verify signature on the backend
+                handler: async function (response) {
+                    try {
+                        const verifyRes = await axios.post(
+                            `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/payment/verify-payment`,
+                            {
+                                razorpay_order_id: response.razorpay_order_id,
+                                razorpay_payment_id: response.razorpay_payment_id,
+                                razorpay_signature: response.razorpay_signature,
+                                prescriptionId,
+                            },
+                            {
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    authorization: `Bearer ${localStorage.getItem("token")}`,
+                                },
+                            }
+                        );
+
+                        if (verifyRes.data?.success) {
+                            setSuccessMessage("Payment successful! Invoice is now available.");
+                            setSuccessSnackbar(true);
+
+                            // Refresh the page so the row flips from "Pay Now" to "Download Invoice"
+                            setTimeout(() => window.location.reload(), 1500);
+                        } else {
+                            setErrorMessage(verifyRes.data?.message || "Payment verification failed.");
+                            setErrorSnackbar(true);
+                        }
+                    } catch (err) {
+                        console.error("Verification error:", err);
+                        setErrorMessage(
+                            err.response?.data?.message ||
+                            "Payment made but verification failed. Contact support."
+                        );
+                        setErrorSnackbar(true);
+                    } finally {
+                        setPaymentLoading(false);
+                    }
+                },
+
+                prefill: {
+                    name: currentUser?.firstName
+                        ? `${currentUser.firstName} ${currentUser.lastName || ''}`.trim()
+                        : "",
+                    email: currentUser?.email || "",
+                    contact: currentUser?.phone || "",
+                },
+
+                theme: { color: "#31b372" },
+
+                modal: {
+                    ondismiss: function () {
+                        // User closed the popup without paying
+                        setPaymentLoading(false);
+                    },
+                },
+            };
+
+            const rzp = new window.Razorpay(options);
+
+            // If the payment fails inside the modal
+            rzp.on("payment.failed", function (response) {
+                console.error("Razorpay payment failed:", response.error);
+                setErrorMessage(
+                    `Payment failed: ${response.error?.description || "Please try again."}`
+                );
+                setErrorSnackbar(true);
+                setPaymentLoading(false);
+            });
+
+            rzp.open();
         } catch (error) {
-            console.error("Payment error:", error);
-            setErrorMessage(error.message || "Failed to initiate payment. Please try again.");
+            console.error("Payment init error:", error);
+            setErrorMessage(
+                error.response?.data?.message ||
+                error.message ||
+                "Failed to initiate payment. Please try again."
+            );
             setErrorSnackbar(true);
             setPaymentLoading(false);
         }
     };
 
+    // --------------------------------------------------
+    // DOWNLOAD INVOICE
+    // --------------------------------------------------
     const handleDownloadReceipt = async (prescriptionId) => {
         setDownloadLoading(true);
-        
+
         try {
             const response = await axios.get(
                 `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/prescription/invoice/${prescriptionId}`,
@@ -140,23 +232,26 @@ export default function PrescriptionTable({ prescriptionList, loading: propLoadi
                     }
                 }
             );
-            
-            // Create download URL
+
+            // Create download URL from the blob
             const downloadUrl = window.URL.createObjectURL(response.data);
-            
-            // Open PDF in new tab
+
+            // Open PDF in a new tab
             window.open(downloadUrl, '_blank');
-            
+
             // Revoke the URL after a delay to allow the download to complete
             setTimeout(() => {
                 window.URL.revokeObjectURL(downloadUrl);
             }, 1000);
-            
+
             setSuccessMessage("Invoice downloaded successfully!");
             setSuccessSnackbar(true);
         } catch (error) {
             console.error("Download error:", error);
-            setErrorMessage(error.response?.data?.message || "Failed to download invoice. Please try again.");
+            setErrorMessage(
+                error.response?.data?.message ||
+                "Failed to download invoice. Please try again."
+            );
             setErrorSnackbar(true);
         } finally {
             setDownloadLoading(false);
@@ -166,16 +261,16 @@ export default function PrescriptionTable({ prescriptionList, loading: propLoadi
     // Create rows from prescription list
     const rows = useMemo(() => {
         if (!prescriptionList || prescriptionList.length === 0) return [];
-        
+
         return prescriptionList.map((prescription) => {
-            const patientName = prescription.appointmentId?.patientId?.userId 
+            const patientName = prescription.appointmentId?.patientId?.userId
                 ? `${prescription.appointmentId.patientId.userId.firstName || ''} ${prescription.appointmentId.patientId.userId.lastName || ''}`.trim()
                 : 'Unknown Patient';
-            
-            const doctorName = prescription.appointmentId?.doctorId?.userId 
+
+            const doctorName = prescription.appointmentId?.doctorId?.userId
                 ? `Dr. ${prescription.appointmentId.doctorId.userId.firstName || ''} ${prescription.appointmentId.doctorId.userId.lastName || ''}`.trim()
                 : 'Unknown Doctor';
-            
+
             return createData(
                 patientName,
                 doctorName,
@@ -223,8 +318,8 @@ export default function PrescriptionTable({ prescriptionList, loading: propLoadi
                                     <TableCell
                                         key={column.id}
                                         align={column.align || 'left'}
-                                        style={{ 
-                                            minWidth: column.minWidth, 
+                                        style={{
+                                            minWidth: column.minWidth,
                                             fontWeight: "bold",
                                             backgroundColor: '#f5f5f5'
                                         }}
@@ -239,16 +334,16 @@ export default function PrescriptionTable({ prescriptionList, loading: propLoadi
                                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                                 .map((row, index) => {
                                     return (
-                                        <TableRow 
-                                            hover 
-                                            role="checkbox" 
-                                            tabIndex={-1} 
+                                        <TableRow
+                                            hover
+                                            role="checkbox"
+                                            tabIndex={-1}
                                             key={row.actionsID || index}
                                             sx={{ '&:hover': { backgroundColor: '#f9f9f9' } }}
                                         >
                                             {columns.map((column) => {
                                                 const value = row[column.id];
-                                                
+
                                                 if (column.id === 'actionsID' && currentUser?.userType === "Patient") {
                                                     const isPaid = row.paid;
                                                     return (
@@ -294,7 +389,7 @@ export default function PrescriptionTable({ prescriptionList, loading: propLoadi
                                                     return (
                                                         <TableCell key={column.id} align={column.align || 'left'}>
                                                             <Tooltip title={value} placement="top" arrow>
-                                                                <span style={{ 
+                                                                <span style={{
                                                                     display: 'block',
                                                                     maxWidth: '200px',
                                                                     overflow: 'hidden',

@@ -1,31 +1,27 @@
-import React, { useContext, useState } from "react";
-import Backdrop from "@mui/material/Backdrop";
-import Box from "@mui/material/Box";
-import CircularProgress from "@mui/material/CircularProgress";
-import Dialog from "@mui/material/Dialog";
-import DialogContent from "@mui/material/DialogContent";
-import DialogTitle from "@mui/material/DialogTitle";
+import React, { useContext } from "react";
+import {
+    Box, Card, CardContent, Typography, Divider, Chip, Stack, Grid,
+    Alert, CircularProgress,
+} from "@mui/material";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import EventAvailableIcon from "@mui/icons-material/EventAvailable";
+import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
+import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
+import EventBusyIcon from "@mui/icons-material/EventBusy";
 
 import styles from "./Appointment.module.css";
 import MyCalendar from "../Datepicker/MyCalendar";
 import DoctorAppointmentTable from "../MUITable/DoctorAppointmentTable";
-import PrescriptionForm from "../Forms/PrescriptionForm";
 import { UserContext } from "../../Context/UserContext";
 import useAppointments from "../../hooks/useAppointments";
-import api from "../../utils/api";
 
-const getPatientName = (appointment) => {
-    const user = appointment?.patientId?.userId;
-    if (!user) return "Unknown Patient";
-    return `${user.firstName || ""} ${user.lastName || ""}`.trim() || "Unknown Patient";
-};
+const GREEN = "#31b372";
+const GREEN_DARK = "#28995f";
 
 function DoctorAppointment() {
     const { currentUser } = useContext(UserContext);
     const doctorId = currentUser?.doctorId || currentUser?._id;
-
-    const [selectedAppointment, setSelectedAppointment] = useState(null);
-    const [prescriptionLoading, setPrescriptionLoading] = useState(false);
 
     const {
         date,
@@ -42,157 +38,221 @@ function DoctorAppointment() {
         loading,
     } = useAppointments("doctor", doctorId);
 
-    const closePrescriptionDialog = () => {
-        if (!prescriptionLoading) setSelectedAppointment(null);
-    };
-
-    const handleSavePrescription = async (event, prescriptionData) => {
-         console.log("🎯 handleSavePrescription CALLED", { prescriptionData }); 
-        event?.preventDefault();
-        setPrescriptionLoading(true);
-
-        try {
-            const { data } = await api.post("/prescription", prescriptionData);
-            console.log("SAVE RESPONSE:", data); 
-            if (data.message !== "success" || !data.prescription?._id) {
-                throw new Error("Failed to save prescription");
-            }
-
-            setSelectedAppointment(null);
-            await getBookedSlots(); // refresh the table
-        } catch (error) {
-            console.error("Error saving prescription:", error);
-            throw error; // the form shows the error message
-        } finally {
-            setPrescriptionLoading(false);
-        }
-    };
-
     const renderSlots = () => {
-        if (loading) return <p>Loading slots...</p>;
+        if (loading) {
+            return (
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+                    <CircularProgress size={28} sx={{ color: GREEN }} />
+                </Box>
+            );
+        }
 
         if (availableSlots.length === 0) {
             return (
-                <div className="alert alert-info mt-3">
-                    <i className="fa fa-info-circle"></i> No available slots for the selected date.
-                    Please check another date.
-                </div>
+                <Alert severity="info" sx={{ borderRadius: 2 }}>
+                    No available slots for the selected date. Please check another date.
+                </Alert>
             );
         }
 
         return (
-            <div className="d-flex flex-wrap gap-2">
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                 {availableSlots.map((slot) => (
-                    <div key={slot} className={styles.slotCardDisabled}>
-                        {slot}
-                    </div>
+                    <Chip
+                        key={slot}
+                        icon={<AccessTimeIcon sx={{ fontSize: 16 }} />}
+                        label={slot}
+                        sx={{
+                            bgcolor: 'rgba(49,179,114,0.08)',
+                            color: GREEN_DARK,
+                            border: `1px solid ${GREEN}`,
+                            fontWeight: 600,
+                            px: 1,
+                        }}
+                    />
                 ))}
-            </div>
+            </Box>
         );
     };
 
     return (
-        <Box id={styles.appointmentMain} component="main" sx={{ flexGrow: 1, p: 3 }}>
-            <h3 className={styles.pageTitle}>My Appointments Schedule</h3>
+        <Box id={styles.appointmentMain} component="main" sx={{ flexGrow: 1, p: { xs: 2, sm: 3 } }}>
+            {/* ================= HEADER ================= */}
+            <Box sx={{ mb: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <Box
+                        sx={{
+                            width: 44, height: 44, borderRadius: '50%',
+                            bgcolor: 'rgba(49,179,114,0.12)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}
+                    >
+                        <MedicalServicesIcon sx={{ color: GREEN }} />
+                    </Box>
+                    <Box>
+                        <Typography variant="h4" fontWeight={700}>
+                            My Appointments Schedule
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                            View your booked appointments and available slots.
+                        </Typography>
+                    </Box>
+                </Box>
+            </Box>
 
-            <div id={styles.slotGrid}>
-                <div id={styles.calendarDiv}>
-                    <MyCalendar date={date} setDate={setDate} />
-                </div>
+            {/* ================= WELCOME + CALENDAR ================= */}
+            <Grid container spacing={3} sx={{ mb: 3 }}>
+                {/* Calendar */}
+                <Grid item xs={12} md={5} lg={4}>
+                    <Card elevation={0} sx={{ borderRadius: 3, border: '1px solid #eee', p: 1 }}>
+                        <CardContent>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                                <CalendarMonthIcon sx={{ color: GREEN }} />
+                                <Typography variant="h6" fontWeight={700}>
+                                    Select Date
+                                </Typography>
+                            </Box>
+                            <MyCalendar date={date} setDate={setDate} />
+                        </CardContent>
+                    </Card>
+                </Grid>
 
-                <div id={styles.slotCreationDiv}>
-                    <div className="doctor-info-card">
-                        <h4>
-                            Welcome, Dr. {currentUser?.firstName} {currentUser?.lastName}
-                        </h4>
-                        <p>Manage your appointments and schedule below</p>
-                    </div>
+                {/* Welcome + slots */}
+                <Grid item xs={12} md={7} lg={8}>
+                    <Card
+                        elevation={0}
+                        sx={{
+                            borderRadius: 3,
+                            border: '1px solid #eee',
+                            overflow: 'hidden',
+                        }}
+                    >
+                        {/* Welcome band */}
+                        <Box
+                            sx={{
+                                background: `linear-gradient(135deg, ${GREEN} 0%, ${GREEN_DARK} 100%)`,
+                                color: '#fff',
+                                px: { xs: 2, sm: 3 },
+                                py: 2.5,
+                            }}
+                        >
+                            <Typography variant="h6" fontWeight={700}>
+                                Welcome, Dr. {currentUser?.firstName} {currentUser?.lastName}
+                            </Typography>
+                            <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                                Here's your schedule for the selected date.
+                            </Typography>
+                        </Box>
 
-                    <div className="mt-4 row">
-                        <div className="col-12">
-                            <label htmlFor="appDate" className="col-sm-3 col-form-label fw-bold">
-                                Select Date:
-                            </label>
-                            <input
-                                id="appDate"
-                                name="appDate"
-                                type="date"
-                                className="col-form-control col-sm-7"
-                                value={formatDateForDateInput(date)}
-                                onChange={(e) => setDate(getformDate(e.target.value))}
-                            />
-                        </div>
-                    </div>
+                        <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+                            {/* Date picker */}
+                            <Box sx={{ mb: 3 }}>
+                                <Typography
+                                    variant="caption"
+                                    color="text.secondary"
+                                    fontWeight={700}
+                                    sx={{ display: 'block', mb: 0.5 }}
+                                >
+                                    Selected Date
+                                </Typography>
+                                <input
+                                    id="appDate"
+                                    name="appDate"
+                                    type="date"
+                                    value={formatDateForDateInput(date)}
+                                    onChange={(e) => setDate(getformDate(e.target.value))}
+                                    style={{
+                                        width: '100%',
+                                        maxWidth: 300,
+                                        padding: '10px 12px',
+                                        border: '1px solid #ddd',
+                                        borderRadius: 8,
+                                        fontSize: 14,
+                                        outline: 'none',
+                                        color: '#333',
+                                    }}
+                                />
+                            </Box>
 
-                    <div className="row mt-4">
-                        <div className={styles.availableSlotsHeader}>
-                            <h4 className="mt-3">
-                                Available Slots for {formatDateForDateInput(date)}
-                            </h4>
+                            <Divider sx={{ mb: 3 }} />
+
+                            {/* Available slots */}
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                                <EventAvailableIcon sx={{ color: GREEN, fontSize: 20 }} />
+                                <Typography variant="subtitle1" fontWeight={700}>
+                                    Available Slots
+                                </Typography>
+                                {availableSlots.length > 0 && (
+                                    <Chip
+                                        label={availableSlots.length}
+                                        size="small"
+                                        sx={{
+                                            bgcolor: 'rgba(49,179,114,0.15)',
+                                            color: GREEN_DARK,
+                                            fontWeight: 700,
+                                        }}
+                                    />
+                                )}
+                            </Box>
+                            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                Slots for {formatDateForDateInput(date)}
+                            </Typography>
                             {renderSlots()}
-                        </div>
-                    </div>
-                </div>
-            </div>
+                        </CardContent>
+                    </Card>
+                </Grid>
+            </Grid>
 
+            {/* ================= BOOKED APPOINTMENTS ================= */}
             {bookedAppointments.length > 0 ? (
-                <div className={styles.availableSlotsHeader}>
-                    <h4 className="mt-5">My Scheduled Appointments</h4>
-                    <DoctorAppointmentTable
-                        bookedAppointments={bookedAppointments}
-                        deleteBookedSlots={deleteBookedSlots}
-                        doctorList={doctorList}
-                        patientList={patientList}
-                        availableSlots={availableSlots}
-                        getAvailableSlots={getAvailableSlots}
-                        getBookedSlots={getBookedSlots}
-                        onWritePrescription={setSelectedAppointment}
-                    />
-                </div>
+                <Card elevation={0} sx={{ borderRadius: 3, border: '1px solid #eee' }}>
+                    <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                            <LocalHospitalIcon sx={{ color: GREEN }} />
+                            <Typography variant="h6" fontWeight={700}>
+                                My Scheduled Appointments
+                            </Typography>
+                            <Chip
+                                label={bookedAppointments.length}
+                                size="small"
+                                sx={{
+                                    bgcolor: 'rgba(49,179,114,0.15)',
+                                    color: GREEN_DARK,
+                                    fontWeight: 700,
+                                }}
+                            />
+                        </Box>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                            Click "Write Prescription" on a row to create a prescription for that patient.
+                        </Typography>
+                        <Divider sx={{ mb: 2 }} />
+
+                        <DoctorAppointmentTable
+                            bookedAppointments={bookedAppointments}
+                            deleteBookedSlots={deleteBookedSlots}
+                            doctorList={doctorList}
+                            patientList={patientList}
+                            availableSlots={availableSlots}
+                            getAvailableSlots={getAvailableSlots}
+                            getBookedSlots={getBookedSlots}
+                        />
+                    </CardContent>
+                </Card>
             ) : (
                 !loading && (
-                    <div className="text-center mt-5 p-5 bg-light rounded">
-                        <i className="fa fa-calendar-check-o fa-3x text-success mb-3"></i>
-                        <h5>No appointments scheduled for this date</h5>
-                        <p className="text-muted">Select a different date to view your schedule</p>
-                    </div>
+                    <Card elevation={0} sx={{ borderRadius: 3, border: '1px solid #eee' }}>
+                        <CardContent sx={{ textAlign: 'center', py: 6 }}>
+                            <EventBusyIcon sx={{ fontSize: 56, color: '#bbb', mb: 1 }} />
+                            <Typography variant="h6" fontWeight={700} gutterBottom>
+                                No appointments scheduled for this date
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                                Select a different date to view your schedule.
+                            </Typography>
+                        </CardContent>
+                    </Card>
                 )
             )}
-
-            <Dialog
-                open={Boolean(selectedAppointment)}
-                onClose={closePrescriptionDialog}
-                maxWidth="md"
-                fullWidth
-            >
-                <DialogTitle>
-                    Create Prescription for {getPatientName(selectedAppointment)}
-                </DialogTitle>
-                <DialogContent>
-                    {selectedAppointment && (
-                        <PrescriptionForm
-                            formName="prescriptionForm"
-                            appointmentId={selectedAppointment._id}
-                            patientSelected={selectedAppointment.patientId?._id}
-                            patientName={getPatientName(selectedAppointment)}
-                            patientList={patientList}
-                            doctorId={doctorId}
-                            formOnSubmit={handleSavePrescription}
-                            onCancel={closePrescriptionDialog}
-                            onSuccess={() => {
-                                setSelectedAppointment(null);
-                                getBookedSlots();
-                            }}
-                            prescriptionLoading={prescriptionLoading}
-                        />
-                    )}
-                </DialogContent>
-            </Dialog>
-
-            <Backdrop open={prescriptionLoading} sx={{ color: "#fff", zIndex: 9999 }}>
-                <CircularProgress color="inherit" />
-                <span style={{ marginLeft: 10 }}>Saving prescription...</span>
-            </Backdrop>
         </Box>
     );
 }

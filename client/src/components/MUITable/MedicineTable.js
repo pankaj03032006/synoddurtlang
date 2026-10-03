@@ -1,62 +1,63 @@
 import React, { useContext, useState, useMemo } from 'react';
-import { UserContext } from '../../Context/UserContext';
-import Paper from '@mui/material/Paper';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TablePagination from '@mui/material/TablePagination';
-import TableRow from '@mui/material/TableRow';
+import { useNavigate } from 'react-router-dom';
+import {
+    Paper, Table, TableBody, TableCell, TableContainer, TableHead,
+    TablePagination, TableRow, Tooltip, CircularProgress, Alert,
+    Snackbar, Box, Typography, IconButton, Chip, Stack, Button,
+    InputAdornment, TextField, Divider,
+} from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import Tooltip from '@mui/material/Tooltip';
-import CircularProgress from '@mui/material/CircularProgress';
-import Alert from '@mui/material/Alert';
-import Snackbar from '@mui/material/Snackbar';
-import { useNavigate } from 'react-router-dom';
+import SearchIcon from '@mui/icons-material/Search';
+import MedicationIcon from '@mui/icons-material/Medication';
+import AddCircleIcon from '@mui/icons-material/AddCircle';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ErrorIcon from '@mui/icons-material/Error';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import { NavLink } from 'react-router-dom';
+import { UserContext } from '../../Context/UserContext';
 import ConfirmDeleteDialogue from '../MUIDialogueBox/ConfirmDeleteDialogue';
 
-function createData(Company, Name, Description, Price, actionsID) {
-    return { Company, Name, Description, Price, actionsID };
+const GREEN = '#31b372';
+const GREEN_DARK = '#28995f';
+const RED = '#d32f2f';
+
+function createData(company, name, description, price, actionsID) {
+    return { company, name, description, price, actionsID };
 }
 
 export default function MedicineTable({ medicineList, deleteMedicine, loading: propLoading }) {
     const { currentUser } = useContext(UserContext);
-    
+    const navigate = useNavigate();
+
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(5);
     const [deleteLoading, setDeleteLoading] = useState(false);
     const [openConfirmDeleteDialogue, setOpenConfirmDeleteDialogue] = useState(false);
     const [selectedMedicineId, setSelectedMedicineId] = useState(null);
     const [selectedMedicineName, setSelectedMedicineName] = useState('');
-    const [successSnackbar, setSuccessSnackbar] = useState(false);
-    const [successMessage, setSuccessMessage] = useState('');
-    const [errorSnackbar, setErrorSnackbar] = useState(false);
-    const [errorMessage, setErrorMessage] = useState('');
+    const [query, setQuery] = useState('');
+    const [snack, setSnack] = useState({ open: false, severity: 'success', message: '' });
 
-    const navigate = useNavigate();
+    const notify = (severity, message) =>
+        setSnack({ open: true, severity, message });
 
-    // Define columns based on user type
+    const isAdmin = currentUser?.userType === 'Admin';
+
     const columns = useMemo(() => {
-        if (currentUser?.userType === "Admin") {
-            return [
-                { id: 'Company', label: 'Company/Brand', minWidth: 170 },
-                { id: 'Name', label: 'Medicine Name', minWidth: 170 },
-                { id: 'Description', label: 'Description', minWidth: 200 },
-                { id: 'Price', label: 'Price', minWidth: 100, align: 'right' },
-                { id: 'actionsID', label: 'Actions', minWidth: 120, align: 'center' },
-            ];
-        } else {
-            return [
-                { id: 'Company', label: 'Company/Brand', minWidth: 170 },
-                { id: 'Name', label: 'Medicine Name', minWidth: 170 },
-                { id: 'Description', label: 'Description', minWidth: 200 },
-                { id: 'Price', label: 'Price', minWidth: 100, align: 'right' },
-            ];
+        const base = [
+            { id: 'name', label: 'Medicine', minWidth: 200 },
+            { id: 'company', label: 'Company / Brand', minWidth: 170 },
+            { id: 'description', label: 'Description', minWidth: 240 },
+            { id: 'price', label: 'Price', minWidth: 100, align: 'right' },
+        ];
+        if (isAdmin) {
+            base.push({ id: 'actionsID', label: 'Actions', minWidth: 120, align: 'center' });
         }
-    }, [currentUser?.userType]);
+        return base;
+    }, [isAdmin]);
 
+    // -------- Handlers --------
     const handleDeleteDialogueOpen = (medicineId, medicineName) => {
         setSelectedMedicineId(medicineId);
         setSelectedMedicineName(medicineName);
@@ -71,89 +72,198 @@ export default function MedicineTable({ medicineList, deleteMedicine, loading: p
 
     const handleDeleteMedicine = async () => {
         if (!selectedMedicineId) return;
-        
         setDeleteLoading(true);
-        
         try {
             await deleteMedicine(selectedMedicineId);
-            setSuccessMessage(`Medicine "${selectedMedicineName}" deleted successfully!`);
-            setSuccessSnackbar(true);
+            notify('success', `"${selectedMedicineName}" deleted successfully.`);
             handleDeleteDialogueClose();
         } catch (error) {
-            console.error("Error deleting medicine:", error);
-            setErrorMessage(error.response?.data?.message || "Failed to delete medicine");
-            setErrorSnackbar(true);
+            console.error('Error deleting medicine:', error);
+            notify(
+                'error',
+                error.response?.data?.message || 'Failed to delete medicine.'
+            );
         } finally {
             setDeleteLoading(false);
         }
     };
 
-    const handleChangePage = (event, newPage) => {
-        setPage(newPage);
-    };
+    const handleChangePage = (_, newPage) => setPage(newPage);
 
     const handleChangeRowsPerPage = (event) => {
         setRowsPerPage(+event.target.value);
         setPage(0);
     };
 
-    const handleEditMedicine = (medicineId) => {
-        navigate(`/medicines/edit/${medicineId}`);
-    };
+    const handleEditMedicine = (medicineId) => navigate(`/medicines/edit/${medicineId}`);
 
-    // Create rows from medicine list
+    // -------- Rows + filter --------
     const rows = useMemo(() => {
         if (!medicineList || medicineList.length === 0) return [];
-        
-        return medicineList.map((medicine) => {
-            return createData(
-                medicine.company || 'N/A',
-                medicine.name || 'N/A',
-                medicine.description || 'No description',
-                medicine.price || 0,
-                medicine._id
-            );
-        });
+        return medicineList.map((m) =>
+            createData(
+                m.company || 'N/A',
+                m.name || 'N/A',
+                m.description || '',
+                typeof m.price === 'number' ? m.price : parseFloat(m.price) || 0,
+                m._id
+            )
+        );
     }, [medicineList]);
 
-    // Show loading state
+    const filtered = useMemo(() => {
+        const q = query.trim().toLowerCase();
+        if (!q) return rows;
+        return rows.filter(
+            (r) =>
+                r.name.toLowerCase().includes(q) ||
+                r.company.toLowerCase().includes(q) ||
+                r.description.toLowerCase().includes(q)
+        );
+    }, [rows, query]);
+
+    // -------- Loading --------
     if (propLoading) {
         return (
-            <Paper sx={{ width: '95%', overflow: 'hidden', marginTop: 2, boxShadow: "0 12px 24px rgba(0, 0, 0, 0.2)", p: 4 }}>
-                <div style={{ textAlign: 'center', padding: '20px' }}>
-                    <CircularProgress size={40} />
-                    <p className="mt-3 text-muted">Loading medicines...</p>
-                </div>
+            <Paper
+                elevation={0}
+                sx={{
+                    width: '100%',
+                    border: '1px solid #eee',
+                    borderRadius: 3,
+                    p: 4,
+                    mt: 2,
+                }}
+            >
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                    <CircularProgress size={40} sx={{ color: GREEN }} />
+                </Box>
+                <Typography textAlign="center" color="text.secondary" sx={{ mt: 2 }}>
+                    Loading medicines...
+                </Typography>
             </Paper>
         );
     }
 
-    // Show empty state
+    // -------- Empty --------
     if (!medicineList || medicineList.length === 0) {
         return (
-            <Paper sx={{ width: '95%', overflow: 'hidden', marginTop: 2, boxShadow: "0 12px 24px rgba(0, 0, 0, 0.2)", p: 4 }}>
-                <Alert severity="info" sx={{ justifyContent: 'center' }}>
-                    No medicines found. Click "Add Medicine" to get started.
-                </Alert>
+            <Paper
+                elevation={0}
+                sx={{
+                    width: '100%',
+                    border: '1px solid #eee',
+                    borderRadius: 3,
+                    mt: 2,
+                }}
+            >
+                <Box sx={{ textAlign: 'center', py: 6, px: 3 }}>
+                    <MedicationIcon sx={{ fontSize: 56, color: '#bbb', mb: 1 }} />
+                    <Typography variant="h6" fontWeight={700} gutterBottom>
+                        No medicines yet
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                        Add your first medicine to start building the inventory.
+                    </Typography>
+                    {isAdmin && (
+                        <Button
+                            component={NavLink}
+                            to="/medicines/add"
+                            variant="contained"
+                            startIcon={<AddCircleIcon />}
+                            sx={{
+                                bgcolor: GREEN,
+                                textTransform: 'none',
+                                fontWeight: 600,
+                                '&:hover': { bgcolor: GREEN_DARK },
+                            }}
+                        >
+                            Add Medicine
+                        </Button>
+                    )}
+                </Box>
             </Paper>
         );
     }
 
+    // -------- Main --------
     return (
         <>
-            <Paper sx={{ width: '95%', overflow: 'hidden', marginTop: 2, boxShadow: "0 12px 24px rgba(0, 0, 0, 0.2)" }}>
-                <TableContainer>
-                    <Table stickyHeader aria-label="sticky table">
+            <Paper
+                elevation={0}
+                sx={{
+                    width: '100%',
+                    border: '1px solid #eee',
+                    borderRadius: 3,
+                    overflow: 'hidden',
+                    mt: 2,
+                }}
+            >
+                {/* ---- Header row: title + search ---- */}
+                <Box
+                    sx={{
+                        p: { xs: 2, sm: 3 },
+                        display: 'flex',
+                        flexDirection: { xs: 'column', sm: 'row' },
+                        alignItems: { xs: 'stretch', sm: 'center' },
+                        justifyContent: 'space-between',
+                        gap: 2,
+                    }}
+                >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <MedicationIcon sx={{ color: GREEN }} />
+                        <Typography variant="h6" fontWeight={700}>
+                            Medicine Inventory
+                        </Typography>
+                        <Chip
+                            label={filtered.length}
+                            size="small"
+                            sx={{
+                                bgcolor: 'rgba(49,179,114,0.15)',
+                                color: GREEN_DARK,
+                                fontWeight: 700,
+                            }}
+                        />
+                    </Box>
+
+                    <TextField
+                        size="small"
+                        placeholder="Search medicines..."
+                        value={query}
+                        onChange={(e) => {
+                            setQuery(e.target.value);
+                            setPage(0);
+                        }}
+                        sx={{ width: { xs: '100%', sm: 280 } }}
+                        InputProps={{
+                            startAdornment: (
+                                <InputAdornment position="start">
+                                    <SearchIcon fontSize="small" />
+                                </InputAdornment>
+                            ),
+                        }}
+                    />
+                </Box>
+
+                <Divider />
+
+                <TableContainer sx={{ maxHeight: 560 }}>
+                    <Table stickyHeader aria-label="medicine table">
                         <TableHead>
                             <TableRow>
                                 {columns.map((column) => (
                                     <TableCell
                                         key={column.id}
                                         align={column.align || 'left'}
-                                        style={{ 
-                                            minWidth: column.minWidth, 
-                                            fontWeight: "bold",
-                                            backgroundColor: '#f5f5f5'
+                                        sx={{
+                                            minWidth: column.minWidth,
+                                            fontWeight: 700,
+                                            bgcolor: '#fafafa',
+                                            color: '#555',
+                                            textTransform: 'uppercase',
+                                            fontSize: 12,
+                                            letterSpacing: 0.5,
+                                            borderBottom: '2px solid #eee',
                                         }}
                                     >
                                         {column.label}
@@ -162,115 +272,212 @@ export default function MedicineTable({ medicineList, deleteMedicine, loading: p
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {rows
-                                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                                .map((row, index) => {
-                                    return (
-                                        <TableRow 
-                                            hover 
-                                            role="checkbox" 
-                                            tabIndex={-1} 
+                            {filtered.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={columns.length} align="center" sx={{ py: 5 }}>
+                                        <SearchIcon sx={{ fontSize: 40, color: '#ccc', mb: 1 }} />
+                                        <Typography variant="body2" color="text.secondary">
+                                            No medicines match "{query}"
+                                        </Typography>
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                filtered
+                                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                                    .map((row, index) => (
+                                        <TableRow
+                                            hover
                                             key={row.actionsID || index}
-                                            sx={{ '&:hover': { backgroundColor: '#f9f9f9' } }}
+                                            sx={{
+                                                '&:hover': { bgcolor: 'rgba(49,179,114,0.04)' },
+                                                '&:last-child td': { borderBottom: 'none' },
+                                            }}
                                         >
                                             {columns.map((column) => {
                                                 const value = row[column.id];
-                                                
-                                                if (column.id === 'actionsID' && currentUser?.userType === "Admin") {
+
+                                                // Actions
+                                                if (column.id === 'actionsID' && isAdmin) {
                                                     return (
-                                                        <TableCell key={column.id} align={column.align || 'center'}>
-                                                            <div className="d-flex gap-2 justify-content-center">
-                                                                <Tooltip title="Edit Medicine" placement="top" arrow>
-                                                                    <EditIcon
-                                                                        className="mx-2"
-                                                                        style={{ 
-                                                                            color: '#ff6600', 
-                                                                            fontSize: 28,
-                                                                            cursor: 'pointer',
-                                                                            transition: 'transform 0.2s'
-                                                                        }}
+                                                        <TableCell key={column.id} align="center">
+                                                            <Stack
+                                                                direction="row"
+                                                                spacing={0.5}
+                                                                justifyContent="center"
+                                                            >
+                                                                <Tooltip title="Edit medicine" arrow>
+                                                                    <IconButton
+                                                                        size="small"
                                                                         onClick={() => handleEditMedicine(value)}
-                                                                        onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
-                                                                        onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                                                                    />
-                                                                </Tooltip>
-                                                                <Tooltip title="Delete Medicine" placement="top" arrow>
-                                                                    <DeleteIcon
-                                                                        className="mx-2"
-                                                                        style={{ 
-                                                                            color: '#dc3545', 
-                                                                            fontSize: 28,
-                                                                            cursor: 'pointer',
-                                                                            transition: 'transform 0.2s'
+                                                                        sx={{
+                                                                            color: '#ff9800',
+                                                                            '&:hover': {
+                                                                                bgcolor: 'rgba(255,152,0,0.1)',
+                                                                            },
                                                                         }}
-                                                                        onClick={() => handleDeleteDialogueOpen(value, row.Name)}
-                                                                        onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
-                                                                        onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                                                                    />
+                                                                    >
+                                                                        <EditIcon fontSize="small" />
+                                                                    </IconButton>
                                                                 </Tooltip>
-                                                            </div>
-                                                        </TableCell>
-                                                    );
-                                                } else if (column.id === 'Description') {
-                                                    return (
-                                                        <TableCell 
-                                                            key={column.id} 
-                                                            align={column.align || 'left'} 
-                                                            sx={{ 
-                                                                maxWidth: 250,
-                                                                overflow: 'hidden',
-                                                                textOverflow: 'ellipsis',
-                                                                whiteSpace: 'nowrap'
-                                                            }}
-                                                        >
-                                                            <Tooltip title={value} placement="top" arrow>
-                                                                <span>{value || '-'}</span>
-                                                            </Tooltip>
-                                                        </TableCell>
-                                                    );
-                                                } else if (column.id === 'Price') {
-                                                    return (
-                                                        <TableCell key={column.id} align={column.align || 'right'}>
-                                                            <span style={{ fontWeight: 'bold', color: '#2e7d32' }}>
-                                                                ₹{parseFloat(value).toFixed(2)}
-                                                            </span>
-                                                        </TableCell>
-                                                    );
-                                                } else {
-                                                    return (
-                                                        <TableCell key={column.id} align={column.align || 'left'}>
-                                                            {value || '-'}
+                                                                <Tooltip title="Delete medicine" arrow>
+                                                                    <IconButton
+                                                                        size="small"
+                                                                        onClick={() => handleDeleteDialogueOpen(value, row.name)}
+                                                                        sx={{
+                                                                            color: RED,
+                                                                            '&:hover': {
+                                                                                bgcolor: 'rgba(211,47,47,0.08)',
+                                                                            },
+                                                                        }}
+                                                                    >
+                                                                        <DeleteIcon fontSize="small" />
+                                                                    </IconButton>
+                                                                </Tooltip>
+                                                            </Stack>
                                                         </TableCell>
                                                     );
                                                 }
+
+                                                // Name column with icon
+                                                if (column.id === 'name') {
+                                                    return (
+                                                        <TableCell key={column.id}>
+                                                            <Box
+                                                                sx={{
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    gap: 1.5,
+                                                                }}
+                                                            >
+                                                                <Box
+                                                                    sx={{
+                                                                        width: 32,
+                                                                        height: 32,
+                                                                        borderRadius: 1.5,
+                                                                        bgcolor: 'rgba(49,179,114,0.12)',
+                                                                        display: 'flex',
+                                                                        alignItems: 'center',
+                                                                        justifyContent: 'center',
+                                                                        flexShrink: 0,
+                                                                    }}
+                                                                >
+                                                                    <MedicationIcon
+                                                                        sx={{ color: GREEN_DARK, fontSize: 18 }}
+                                                                    />
+                                                                </Box>
+                                                                <Typography variant="body2" fontWeight={600}>
+                                                                    {value}
+                                                                </Typography>
+                                                            </Box>
+                                                        </TableCell>
+                                                    );
+                                                }
+
+                                                // Company
+                                                if (column.id === 'company') {
+                                                    return (
+                                                        <TableCell key={column.id}>
+                                                            <Typography
+                                                                variant="body2"
+                                                                color="text.secondary"
+                                                            >
+                                                                {value}
+                                                            </Typography>
+                                                        </TableCell>
+                                                    );
+                                                }
+
+                                                // Description with tooltip
+                                                if (column.id === 'description') {
+                                                    const short =
+                                                        value && value.length > 60
+                                                            ? value.slice(0, 60) + '…'
+                                                            : value;
+                                                    return (
+                                                        <TableCell
+                                                            key={column.id}
+                                                            sx={{
+                                                                maxWidth: 280,
+                                                                overflow: 'hidden',
+                                                                textOverflow: 'ellipsis',
+                                                                whiteSpace: 'nowrap',
+                                                            }}
+                                                        >
+                                                            {value ? (
+                                                                <Tooltip title={value} arrow placement="top">
+                                                                    <Typography
+                                                                        variant="body2"
+                                                                        color="text.secondary"
+                                                                        sx={{ cursor: 'help' }}
+                                                                    >
+                                                                        {short}
+                                                                    </Typography>
+                                                                </Tooltip>
+                                                            ) : (
+                                                                <Typography
+                                                                    variant="body2"
+                                                                    color="text.disabled"
+                                                                    fontStyle="italic"
+                                                                >
+                                                                    No description
+                                                                </Typography>
+                                                            )}
+                                                        </TableCell>
+                                                    );
+                                                }
+
+                                                // Price
+                                                if (column.id === 'price') {
+                                                    return (
+                                                        <TableCell key={column.id} align="right">
+                                                            <Typography
+                                                                variant="body2"
+                                                                fontWeight={700}
+                                                                sx={{ color: GREEN_DARK }}
+                                                            >
+                                                                ₹{Number(value).toFixed(2)}
+                                                            </Typography>
+                                                        </TableCell>
+                                                    );
+                                                }
+
+                                                return (
+                                                    <TableCell key={column.id} align={column.align || 'left'}>
+                                                        {value || '-'}
+                                                    </TableCell>
+                                                );
                                             })}
                                         </TableRow>
-                                    );
-                                })}
+                                    ))
+                            )}
                         </TableBody>
                     </Table>
                 </TableContainer>
+
+                <Divider />
+
                 <TablePagination
                     rowsPerPageOptions={[5, 10, 25, 50, 100]}
                     component="div"
-                    count={rows.length}
+                    count={filtered.length}
                     rowsPerPage={rowsPerPage}
                     page={page}
                     onPageChange={handleChangePage}
                     onRowsPerPageChange={handleChangeRowsPerPage}
                     sx={{
-                        "& p": {
-                            "marginTop": 'auto',
-                            "marginBottom": 'auto'
-                        }
+                        '& p': { marginTop: 'auto', marginBottom: 'auto' },
+                        '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': {
+                            marginTop: 'auto',
+                            marginBottom: 'auto',
+                        },
                     }}
                 />
             </Paper>
 
-            {/* Delete Confirmation Dialogue */}
+            {/* Delete confirmation */}
             <ConfirmDeleteDialogue
                 title="Delete Medicine"
-                message="Are you sure you want to delete this medicine?"
+                message="This will permanently remove the medicine from inventory."
                 itemName={selectedMedicineName}
                 open={openConfirmDeleteDialogue}
                 handleClose={handleDeleteDialogueClose}
@@ -279,27 +486,21 @@ export default function MedicineTable({ medicineList, deleteMedicine, loading: p
                 deleteButtonText="Delete Medicine"
             />
 
-            {/* Success Snackbar */}
+            {/* Snackbar */}
             <Snackbar
-                open={successSnackbar}
-                autoHideDuration={3000}
-                onClose={() => setSuccessSnackbar(false)}
+                open={snack.open}
+                autoHideDuration={snack.severity === 'error' ? 6000 : 3000}
+                onClose={() => setSnack((s) => ({ ...s, open: false }))}
                 anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
             >
-                <Alert severity="success" onClose={() => setSuccessSnackbar(false)} elevation={6}>
-                    {successMessage}
-                </Alert>
-            </Snackbar>
-
-            {/* Error Snackbar */}
-            <Snackbar
-                open={errorSnackbar}
-                autoHideDuration={6000}
-                onClose={() => setErrorSnackbar(false)}
-                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-            >
-                <Alert severity="error" onClose={() => setErrorSnackbar(false)} elevation={6}>
-                    {errorMessage}
+                <Alert
+                    severity={snack.severity}
+                    icon={snack.severity === 'success' ? <CheckCircleIcon /> : <ErrorIcon />}
+                    onClose={() => setSnack((s) => ({ ...s, open: false }))}
+                    elevation={6}
+                    sx={{ borderRadius: 2 }}
+                >
+                    {snack.message}
                 </Alert>
             </Snackbar>
         </>

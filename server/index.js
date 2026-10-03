@@ -7,8 +7,11 @@ const bodyParser = require("body-parser");
 const nodemailer = require("nodemailer");
 const bcrypt = require("bcrypt");
 
+
+
 // Middlewares  -------------------------
 app.use(cors());
+app.options("*", cors());  
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -164,6 +167,7 @@ const MedicineRoute = require("./routes/MedicineRoute");
 const PrescriptionRoute = require("./routes/PrescriptionRoute");
 const InvoiceRoute = require("./routes/InvoiceRoute");
 const ProfileRoute = require("./routes/ProfileRoute");
+const PaymentRoute = require("./routes/PaymentRoute");
 
 // API Routes Middleware -----------------
 app.use(LoginRegisterRoute);
@@ -176,8 +180,10 @@ app.use(MedicineRoute);
 app.use(PrescriptionRoute);
 app.use(InvoiceRoute);
 app.use(ProfileRoute);
+// ...
+app.use(PaymentRoute);
 
-app.use('/api/paypal', require('./routes/api/paypal'));
+
 
 // Default Route -------------------------
 app.get("/", (req, res) => {

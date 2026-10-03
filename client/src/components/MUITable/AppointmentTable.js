@@ -1,91 +1,153 @@
 import * as React from 'react';
-import Paper from '@mui/material/Paper';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TablePagination from '@mui/material/TablePagination';
-import TableRow from '@mui/material/TableRow';
+import { NavLink } from 'react-router-dom';
+import {
+    Paper, Table, TableBody, TableCell, TableContainer, TableHead,
+    TablePagination, TableRow, Tooltip, CircularProgress, Alert,
+    Snackbar, Box, Typography, IconButton, Chip, Stack, Divider, Avatar,
+} from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import Tooltip from '@mui/material/Tooltip';
-import CircularProgress from '@mui/material/CircularProgress';
-import Alert from '@mui/material/Alert';
-import Snackbar from '@mui/material/Snackbar';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import EventAvailableIcon from '@mui/icons-material/EventAvailable';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ErrorIcon from '@mui/icons-material/Error';
 import axios from "axios";
-import moment from "moment";
+
 import ConfirmDeleteDialogue from '../MUIDialogueBox/ConfirmDeleteDialogue';
 import { BootstrapDialog, BootstrapDialogTitle } from "../MUIDialogueBox/BoostrapDialogueBox";
 import DialogContent from '@mui/material/DialogContent';
 import AppointmentForm from '../Forms/AppointmentForm';
 
-const columns = [
-    { id: 'patientName', label: 'Patient Name', minWidth: 170 },
-    { id: 'doctorName', label: 'Doctor Name', minWidth: 100 },
-    { id: 'appointmentDate', label: 'Appointment Date', minWidth: 170 },
-    { id: 'appointmentTime', label: 'Appointment Time', minWidth: 170 },
-    { id: 'actionsID', label: 'Actions', minWidth: 100, align: 'center' },
-];
+const GREEN = '#31b372';
+const GREEN_DARK = '#28995f';
+const RED = '#d32f2f';
+const API = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 function createData(patientName, doctorName, appointmentDate, appointmentTime, actionsID, appointmentData) {
     return { patientName, doctorName, appointmentDate, appointmentTime, actionsID, appointmentData };
 }
 
-export default function AppointmentTable({ 
-    bookedAppointments, 
-    deleteBookedSlots, 
-    doctorList, 
-    patientList, 
-    availableSlots, 
-    getAvailableSlots, 
-    getBookedSlots 
+const getInitials = (first, last) => {
+    const a = (first || '').trim().charAt(0).toUpperCase();
+    const b = (last || '').trim().charAt(0).toUpperCase();
+    return `${a}${b}` || '?';
+};
+
+const formatDateForDisplay = (dateOfJoining) => {
+    if (!dateOfJoining) return '—';
+    const d = new Date(dateOfJoining);
+    if (Number.isNaN(d.getTime())) return '—';
+    return d.toLocaleDateString(undefined, {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+    });
+};
+
+export default function AppointmentTable({
+    bookedAppointments,
+    deleteBookedSlots,
+    doctorList,
+    patientList,
+    availableSlots,
+    getAvailableSlots,
+    getBookedSlots,
 }) {
     const [page, setPage] = React.useState(0);
     const [rowsPerPage, setRowsPerPage] = React.useState(10);
     const [loading, setLoading] = React.useState(false);
-    const [successSnackbar, setSuccessSnackbar] = React.useState(false);
-    const [successMessage, setSuccessMessage] = React.useState('');
-    const [errorSnackbar, setErrorSnackbar] = React.useState(false);
-    const [errorMessage, setErrorMessage] = React.useState('');
+    const [snack, setSnack] = React.useState({ open: false, severity: 'success', message: '' });
 
     const [openConfirmDeleteDialogue, setOpenConfirmDeleteDialogue] = React.useState(false);
     const [openEditFormDialogue, setOpenEditFormDialogue] = React.useState(false);
 
-    const [doctorId, setDoctorId] = React.useState("");
-    const [patientId, setPatientId] = React.useState("");
-    const [appointmentDate, setAppointmentDate] = React.useState("");
-    const [appointmentTime, setAppointmentTime] = React.useState("");
-    const [appointmentId, setAppointmentId] = React.useState("");
-    const [appIDToDelete, setAppIDToDelete] = React.useState("");
+    const [doctorId, setDoctorId] = React.useState('');
+    const [patientId, setPatientId] = React.useState('');
+    const [appointmentDate, setAppointmentDate] = React.useState('');
+    const [appointmentTime, setAppointmentTime] = React.useState('');
+    const [appointmentId, setAppointmentId] = React.useState('');
+    const [appIDToDelete, setAppIDToDelete] = React.useState('');
+    const [deleteContext, setDeleteContext] = React.useState('');
 
-    const handleDeleteDialogueOpen = () => {
+    const notify = (severity, message) =>
+        setSnack({ open: true, severity, message });
+
+    // ---------- Delete ----------
+    const handleDeleteDialogueOpen = (appID, context = '') => {
+        setAppIDToDelete(appID);
+        setDeleteContext(context);
         setOpenConfirmDeleteDialogue(true);
     };
 
     const handleDeleteDialogueClose = () => {
         setOpenConfirmDeleteDialogue(false);
-        setAppIDToDelete("");
+        setAppIDToDelete('');
+        setDeleteContext('');
     };
 
-    const handleEditFormOpen = () => {
-        setOpenEditFormDialogue(true);
+    const handleDeleteAppointment = async () => {
+        setLoading(true);
+        try {
+            await deleteBookedSlots(appIDToDelete);
+            notify('success', 'Appointment deleted successfully.');
+            handleDeleteDialogueClose();
+        } catch (error) {
+            console.error('Error deleting appointment:', error);
+            notify(
+                'error',
+                error.response?.data?.message || 'Failed to delete appointment.'
+            );
+        } finally {
+            setLoading(false);
+        }
     };
+
+    // ---------- Edit ----------
+    const handleEditFormOpen = () => setOpenEditFormDialogue(true);
 
     const handleEditFormClose = () => {
         setOpenEditFormDialogue(false);
-        // Reset form data
-        setDoctorId("");
-        setPatientId("");
-        setAppointmentDate("");
-        setAppointmentTime("");
-        setAppointmentId("");
+        setDoctorId('');
+        setPatientId('');
+        setAppointmentDate('');
+        setAppointmentTime('');
+        setAppointmentId('');
+    };
+
+    const formatDateForDateInput = (dateOfJoining) => {
+        if (!dateOfJoining) return '';
+        const d = new Date(dateOfJoining);
+        if (Number.isNaN(d.getTime())) return '';
+        return d.toISOString().slice(0, 10);
+    };
+
+    const setFormProperties = async (appID) => {
+        setLoading(true);
+        try {
+            const response = await axios.get(
+                `${API}/appointments/${appID}`,
+                { headers: { authorization: `Bearer ${localStorage.getItem("token")}` } }
+            );
+
+            const app = response.data.appointment;
+            setDoctorId(app.doctorId?._id || app.doctorId);
+            setPatientId(app.patientId?._id || app.patientId);
+            setAppointmentDate(formatDateForDateInput(app.appointmentDate));
+            setAppointmentTime(app.appointmentTime);
+            setAppointmentId(app._id);
+            handleEditFormOpen();
+        } catch (error) {
+            console.error('Error fetching appointment details:', error);
+            notify('error', 'Failed to load appointment details.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const updateAppointmentFormSubmitted = async (event, formData) => {
         event.preventDefault();
-        
-        // Use formData if provided, otherwise get from form
+
         let reqObj;
         if (formData) {
             reqObj = formData;
@@ -95,227 +157,296 @@ export default function AppointmentTable({
                 appDate: form.appDate.value,
                 appTime: form.appTime.value,
                 doctorId: form.doctor.value,
-                patientId: form.patient.value
+                patientId: form.patient.value,
             };
         }
-        
+
         setLoading(true);
-        
         try {
             const response = await axios.put(
-                `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/appointments/${appointmentId}`,
+                `${API}/appointments/${appointmentId}`,
                 reqObj,
-                {
-                    headers: {
-                        authorization: `Bearer ${localStorage.getItem("token")}`
-                    }
-                }
+                { headers: { authorization: `Bearer ${localStorage.getItem("token")}` } }
             );
-            
-            if (response.data.message === "success") {
-                setSuccessMessage("Appointment updated successfully!");
-                setSuccessSnackbar(true);
-                
-                // Refresh appointments
+
+            if (response.data.message === 'success') {
+                notify('success', 'Appointment updated successfully.');
                 await getAvailableSlots();
                 await getBookedSlots();
-                
                 handleEditFormClose();
             } else {
-                setErrorMessage(response.data.message || "Failed to update appointment");
-                setErrorSnackbar(true);
+                notify('error', response.data.message || 'Failed to update appointment.');
             }
         } catch (error) {
-            console.error("Error updating appointment:", error);
-            setErrorMessage(error.response?.data?.message || "Network error. Please try again.");
-            setErrorSnackbar(true);
+            console.error('Error updating appointment:', error);
+            notify(
+                'error',
+                error.response?.data?.errors?.join(', ') ||
+                error.response?.data?.message ||
+                'Network error. Please try again.'
+            );
         } finally {
             setLoading(false);
         }
     };
 
-    const handleDeleteAppointment = async () => {
-        setLoading(true);
-        
-        try {
-            await deleteBookedSlots(appIDToDelete);
-            setSuccessMessage("Appointment deleted successfully!");
-            setSuccessSnackbar(true);
-            handleDeleteDialogueClose();
-        } catch (error) {
-            console.error("Error deleting appointment:", error);
-            setErrorMessage(error.response?.data?.message || "Failed to delete appointment");
-            setErrorSnackbar(true);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleChangePage = (event, newPage) => {
-        setPage(newPage);
-    };
+    const handleChangePage = (_, newPage) => setPage(newPage);
 
     const handleChangeRowsPerPage = (event) => {
         setRowsPerPage(+event.target.value);
         setPage(0);
     };
 
-    const formatDateForDateInput = (dateOfJoining) => {
-        if (!dateOfJoining) return '';
-        return moment(new Date(dateOfJoining)).format('YYYY-MM-DD');
-    };
-
-    const setFormProperties = async (appID) => {
-        setLoading(true);
-        
-        try {
-            const response = await axios.get(
-                `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/appointments/${appID}`,
-                {
-                    headers: {
-                        authorization: `Bearer ${localStorage.getItem("token")}`
-                    }
-                }
-            );
-            
-            const app = response.data.appointment;
-            setDoctorId(app.doctorId?._id || app.doctorId);
-            setPatientId(app.patientId?._id || app.patientId);
-            setAppointmentDate(formatDateForDateInput(app.appointmentDate));
-            setAppointmentTime(app.appointmentTime);
-            setAppointmentId(app._id);
-            
-            handleEditFormOpen();
-        } catch (error) {
-            console.error("Error fetching appointment details:", error);
-            setErrorMessage("Failed to load appointment details");
-            setErrorSnackbar(true);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Create rows from booked appointments
+    // ---------- Rows ----------
     const rows = React.useMemo(() => {
         if (!bookedAppointments || bookedAppointments.length === 0) return [];
-        
+
         return bookedAppointments.map((apt) => {
-            const patientName = apt.patientId?.userId 
+            const patientName = apt.patientId?.userId
                 ? `${apt.patientId.userId.firstName || ''} ${apt.patientId.userId.lastName || ''}`.trim()
                 : 'Unknown Patient';
-            
-            const doctorName = apt.doctorId?.userId 
+
+            const doctorName = apt.doctorId?.userId
                 ? `Dr. ${apt.doctorId.userId.firstName || ''} ${apt.doctorId.userId.lastName || ''}`.trim()
                 : 'Unknown Doctor';
-            
+
             return createData(
                 patientName,
                 doctorName,
-                formatDateForDateInput(apt.appointmentDate),
-                apt.appointmentTime,
+                formatDateForDisplay(apt.appointmentDate),
+                apt.appointmentTime || '—',
                 apt._id,
                 apt
             );
         });
     }, [bookedAppointments]);
 
-    // Show empty state
+    // ---------- Empty ----------
     if (!bookedAppointments || bookedAppointments.length === 0) {
         return (
-            <Paper sx={{ width: '95%', overflow: 'hidden', marginTop: 5, boxShadow: "0 12px 24px rgba(0, 0, 0, 0.2)", p: 4 }}>
-                <Alert severity="info" sx={{ justifyContent: 'center' }}>
-                    No appointments found. Book an appointment to get started.
-                </Alert>
+            <Paper
+                elevation={0}
+                sx={{ border: '1px solid #eee', borderRadius: 3, mt: 2 }}
+            >
+                <Box sx={{ textAlign: 'center', py: 6, px: 3 }}>
+                    <EventAvailableIcon sx={{ fontSize: 56, color: '#bbb', mb: 1 }} />
+                    <Typography variant="h6" fontWeight={700} gutterBottom>
+                        No appointments yet
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                        Book an appointment to get started.
+                    </Typography>
+                </Box>
             </Paper>
         );
     }
 
+    // ---------- UI ----------
     return (
         <>
-            <Paper sx={{ width: '95%', overflow: 'hidden', marginTop: 5, boxShadow: "0 12px 24px rgba(0, 0, 0, 0.2)" }}>
-                <TableContainer sx={{ maxHeight: 440 }}>
-                    <Table stickyHeader aria-label="sticky table">
+            <Paper
+                elevation={0}
+                sx={{
+                    width: '100%',
+                    border: '1px solid #eee',
+                    borderRadius: 3,
+                    overflow: 'hidden',
+                    mt: 2,
+                }}
+            >
+                <Box
+                    sx={{
+                        p: { xs: 2, sm: 3 },
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                    }}
+                >
+                    <CalendarMonthIcon sx={{ color: GREEN }} />
+                    <Typography variant="h6" fontWeight={700}>
+                        Appointments
+                    </Typography>
+                    <Chip
+                        label={rows.length}
+                        size="small"
+                        sx={{
+                            bgcolor: 'rgba(49,179,114,0.15)',
+                            color: GREEN_DARK,
+                            fontWeight: 700,
+                        }}
+                    />
+                </Box>
+
+                <Divider />
+
+                <TableContainer sx={{ maxHeight: 560 }}>
+                    <Table stickyHeader aria-label="appointments table">
                         <TableHead>
                             <TableRow>
-                                {columns.map((column) => (
+                                {[
+                                    { id: 'patientName', label: 'Patient' },
+                                    { id: 'doctorName', label: 'Doctor' },
+                                    { id: 'appointmentDate', label: 'Date' },
+                                    { id: 'appointmentTime', label: 'Time' },
+                                    { id: 'actionsID', label: 'Actions', align: 'center' },
+                                ].map((col) => (
                                     <TableCell
-                                        key={column.id}
-                                        align={column.align || 'left'}
-                                        style={{ 
-                                            minWidth: column.minWidth, 
-                                            fontWeight: "bold",
-                                            backgroundColor: '#f5f5f5'
+                                        key={col.id}
+                                        align={col.align || 'left'}
+                                        sx={{
+                                            fontWeight: 700,
+                                            bgcolor: '#fafafa',
+                                            color: '#555',
+                                            textTransform: 'uppercase',
+                                            fontSize: 12,
+                                            letterSpacing: 0.5,
+                                            borderBottom: '2px solid #eee',
+                                            minWidth: 140,
                                         }}
                                     >
-                                        {column.label}
+                                        {col.label}
                                     </TableCell>
                                 ))}
                             </TableRow>
                         </TableHead>
+
                         <TableBody>
                             {rows
                                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                                 .map((row, index) => {
+                                    const apt = row.appointmentData || {};
+                                    const firstName = apt.patientId?.userId?.firstName || '';
+                                    const lastName = apt.patientId?.userId?.lastName || '';
+                                    const patientPID = apt.patientId?._id || '';
+
                                     return (
-                                        <TableRow 
-                                            hover 
-                                            role="checkbox" 
-                                            tabIndex={-1} 
+                                        <TableRow
+                                            hover
                                             key={row.actionsID || index}
-                                            sx={{ '&:hover': { backgroundColor: '#f9f9f9' } }}
+                                            sx={{
+                                                '&:hover': { bgcolor: 'rgba(49,179,114,0.04)' },
+                                                '&:last-child td': { borderBottom: 'none' },
+                                            }}
                                         >
-                                            {columns.map((column) => {
-                                                const value = row[column.id];
-                                                if (column.id === 'actionsID') {
-                                                    return (
-                                                        <TableCell key={column.id} align={column.align || 'center'}>
-                                                            <Tooltip title="Edit Appointment" placement="top" arrow>
-                                                                <EditIcon
-                                                                    className="mx-2"
-                                                                    style={{ 
-                                                                        color: '#ff6600', 
-                                                                        fontSize: 28,
-                                                                        cursor: 'pointer',
-                                                                        transition: 'transform 0.2s'
-                                                                    }}
-                                                                    onClick={() => setFormProperties(value)}
-                                                                    onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
-                                                                    onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                                                                />
-                                                            </Tooltip>
-                                                            <Tooltip title="Delete Appointment" placement="top" arrow>
-                                                                <DeleteIcon
-                                                                    className="mx-2"
-                                                                    style={{ 
-                                                                        color: '#dc3545', 
-                                                                        fontSize: 28,
-                                                                        cursor: 'pointer',
-                                                                        transition: 'transform 0.2s'
-                                                                    }}
-                                                                    onClick={() => {
-                                                                        setAppIDToDelete(value);
-                                                                        handleDeleteDialogueOpen();
-                                                                    }}
-                                                                    onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
-                                                                    onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                                                                />
-                                                            </Tooltip>
-                                                        </TableCell>
-                                                    );
-                                                } else {
-                                                    return (
-                                                        <TableCell key={column.id} align={column.align || 'left'}>
-                                                            {value || '-'}
-                                                        </TableCell>
-                                                    );
-                                                }
-                                            })}
+                                            {/* Patient */}
+                                            <TableCell>
+                                                <Box
+                                                    sx={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: 1.5,
+                                                    }}
+                                                >
+                                                    <Avatar
+                                                        sx={{
+                                                            width: 36,
+                                                            height: 36,
+                                                            bgcolor: 'rgba(49,179,114,0.15)',
+                                                            color: GREEN_DARK,
+                                                            fontSize: 14,
+                                                            fontWeight: 700,
+                                                        }}
+                                                    >
+                                                        {getInitials(firstName, lastName)}
+                                                    </Avatar>
+                                                    <Typography
+                                                        variant="body2"
+                                                        fontWeight={600}
+                                                    >
+                                                        {row.patientName}
+                                                    </Typography>
+                                                </Box>
+                                            </TableCell>
+
+                                            {/* Doctor */}
+                                            <TableCell>
+                                                <Typography variant="body2" color="text.secondary">
+                                                    {row.doctorName}
+                                                </Typography>
+                                            </TableCell>
+
+                                            {/* Date */}
+                                            <TableCell>
+                                                <Stack direction="row" spacing={0.75} alignItems="center">
+                                                    <CalendarMonthIcon
+                                                        sx={{ fontSize: 16, color: '#999' }}
+                                                    />
+                                                    <Typography variant="body2">
+                                                        {row.appointmentDate}
+                                                    </Typography>
+                                                </Stack>
+                                            </TableCell>
+
+                                            {/* Time */}
+                                            <TableCell>
+                                                <Chip
+                                                    icon={
+                                                        <AccessTimeIcon
+                                                            sx={{ fontSize: 14, color: `${GREEN_DARK} !important` }}
+                                                        />
+                                                    }
+                                                    label={row.appointmentTime}
+                                                    size="small"
+                                                    sx={{
+                                                        bgcolor: 'rgba(49,179,114,0.1)',
+                                                        color: GREEN_DARK,
+                                                        fontWeight: 600,
+                                                        fontSize: 12,
+                                                    }}
+                                                />
+                                            </TableCell>
+
+                                            {/* Actions */}
+                                            <TableCell align="center">
+                                                <Stack
+                                                    direction="row"
+                                                    spacing={0.5}
+                                                    justifyContent="center"
+                                                >
+                                                    <Tooltip title="Edit appointment" arrow>
+                                                        <IconButton
+                                                            size="small"
+                                                            onClick={() => setFormProperties(row.actionsID)}
+                                                            sx={{
+                                                                color: '#ff9800',
+                                                                '&:hover': {
+                                                                    bgcolor: 'rgba(255,152,0,0.1)',
+                                                                },
+                                                            }}
+                                                        >
+                                                            <EditIcon fontSize="small" />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                    <Tooltip title="Delete appointment" arrow>
+                                                        <IconButton
+                                                            size="small"
+                                                            onClick={() =>
+                                                                handleDeleteDialogueOpen(
+                                                                    row.actionsID,
+                                                                    `${row.patientName} — ${row.appointmentDate}`
+                                                                )
+                                                            }
+                                                            sx={{
+                                                                color: RED,
+                                                                '&:hover': {
+                                                                    bgcolor: 'rgba(211,47,47,0.08)',
+                                                                },
+                                                            }}
+                                                        >
+                                                            <DeleteIcon fontSize="small" />
+                                                        </IconButton>
+                                                    </Tooltip>
+                                                </Stack>
+                                            </TableCell>
                                         </TableRow>
                                     );
                                 })}
                         </TableBody>
                     </Table>
                 </TableContainer>
+
+                <Divider />
+
                 <TablePagination
                     rowsPerPageOptions={[10, 25, 50, 100]}
                     component="div"
@@ -325,19 +456,20 @@ export default function AppointmentTable({
                     onPageChange={handleChangePage}
                     onRowsPerPageChange={handleChangeRowsPerPage}
                     sx={{
-                        "& p": {
-                            "marginTop": 'auto',
-                            "marginBottom": 'auto'
-                        }
+                        '& p': { marginTop: 'auto', marginBottom: 'auto' },
+                        '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': {
+                            marginTop: 'auto',
+                            marginBottom: 'auto',
+                        },
                     }}
                 />
             </Paper>
 
-            {/* Delete Confirmation Dialogue */}
+            {/* ---------- Delete confirmation ---------- */}
             <ConfirmDeleteDialogue
                 title="Delete Appointment"
-                message="Are you sure you want to delete this appointment?"
-                itemName={`Appointment on ${appointmentDate}`}
+                message="This will cancel the appointment and free the time slot for other patients."
+                itemName={deleteContext || 'Appointment'}
                 open={openConfirmDeleteDialogue}
                 handleClose={handleDeleteDialogueClose}
                 handleDelete={handleDeleteAppointment}
@@ -345,23 +477,36 @@ export default function AppointmentTable({
                 deleteButtonText="Delete Appointment"
             />
 
-            {/* Edit Appointment Dialogue */}
+            {/* ---------- Edit dialog ---------- */}
             <BootstrapDialog
                 onClose={handleEditFormClose}
-                aria-labelledby="customized-dialog-title"
+                aria-labelledby="update-appointment-dialog-title"
                 open={openEditFormDialogue}
                 maxWidth="md"
                 fullWidth
             >
-                <BootstrapDialogTitle id="customized-dialog-title" onClose={handleEditFormClose}>
+                <BootstrapDialogTitle
+                    id="update-appointment-dialog-title"
+                    onClose={handleEditFormClose}
+                >
                     Update Appointment
                 </BootstrapDialogTitle>
                 <DialogContent dividers>
                     {loading ? (
-                        <div style={{ textAlign: 'center', padding: '20px' }}>
-                            <CircularProgress />
-                            <p>Loading appointment details...</p>
-                        </div>
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                py: 4,
+                                gap: 2,
+                            }}
+                        >
+                            <CircularProgress size={40} sx={{ color: GREEN }} />
+                            <Typography variant="body2" color="text.secondary">
+                                Loading appointment details...
+                            </Typography>
+                        </Box>
                     ) : (
                         <AppointmentForm
                             formName="updateAppointment"
@@ -379,27 +524,21 @@ export default function AppointmentTable({
                 </DialogContent>
             </BootstrapDialog>
 
-            {/* Success Snackbar */}
+            {/* ---------- Snackbar ---------- */}
             <Snackbar
-                open={successSnackbar}
-                autoHideDuration={3000}
-                onClose={() => setSuccessSnackbar(false)}
+                open={snack.open}
+                autoHideDuration={snack.severity === 'error' ? 6000 : 3000}
+                onClose={() => setSnack((s) => ({ ...s, open: false }))}
                 anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
             >
-                <Alert severity="success" onClose={() => setSuccessSnackbar(false)} elevation={6}>
-                    {successMessage}
-                </Alert>
-            </Snackbar>
-
-            {/* Error Snackbar */}
-            <Snackbar
-                open={errorSnackbar}
-                autoHideDuration={6000}
-                onClose={() => setErrorSnackbar(false)}
-                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-            >
-                <Alert severity="error" onClose={() => setErrorSnackbar(false)} elevation={6}>
-                    {errorMessage}
+                <Alert
+                    severity={snack.severity}
+                    icon={snack.severity === 'success' ? <CheckCircleIcon /> : <ErrorIcon />}
+                    onClose={() => setSnack((s) => ({ ...s, open: false }))}
+                    elevation={6}
+                    sx={{ borderRadius: 2 }}
+                >
+                    {snack.message}
                 </Alert>
             </Snackbar>
         </>

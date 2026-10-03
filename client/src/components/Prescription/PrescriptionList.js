@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
 import moment from "moment";
 
 import ErrorDialogueBox from "../MUIDialogueBox/ErrorDialogueBox";
@@ -22,7 +23,7 @@ function PrescriptionList() {
     const doctorId = searchParams.get("doctorId");
 
     const [prescriptions, setPrescriptions] = useState([]);
-    const [loading, setLoading] = useState(true); // true so "No prescriptions found" doesn't flash first
+    const [loading, setLoading] = useState(true);
     const [errorList, setErrorList] = useState([]);
 
     const fetchPrescriptions = useCallback(async () => {
@@ -36,7 +37,6 @@ function PrescriptionList() {
             const { data } = await api.post("/prescriptions", body);
 
             if (data.message === "success") {
-                // Newest appointment first (copy before sorting, never mutate response data)
                 const sorted = [...data.prescriptions].sort(
                     (a, b) => getAppointmentTime(b) - getAppointmentTime(a)
                 );
@@ -61,7 +61,14 @@ function PrescriptionList() {
         <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
             <div className="page-wrapper">
                 <div className="content">
-                    <h4 className="page-title">Prescription</h4>
+                    <Box sx={{ mb: 3 }}>
+                        <Typography variant="h4" fontWeight={700} gutterBottom>
+                            Prescriptions
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                            View and pay for prescriptions issued to you.
+                        </Typography>
+                    </Box>
 
                     {loading ? (
                         <div className="text-center p-4">
@@ -71,7 +78,11 @@ function PrescriptionList() {
                             <p>Loading prescriptions...</p>
                         </div>
                     ) : (
-                        <PrescriptionTable prescriptionList={prescriptions} />
+                        <PrescriptionTable
+                            prescriptionList={prescriptions}
+                            loading={loading}
+                            onRefresh={fetchPrescriptions}
+                        />
                     )}
                 </div>
 
