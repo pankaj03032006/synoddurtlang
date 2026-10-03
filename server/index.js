@@ -167,7 +167,7 @@ const MedicineRoute = require("./routes/MedicineRoute");
 const PrescriptionRoute = require("./routes/PrescriptionRoute");
 const InvoiceRoute = require("./routes/InvoiceRoute");
 const ProfileRoute = require("./routes/ProfileRoute");
-const PaymentRoute = require("./routes/PaymentRoute");
+const PaymentRoute = require("./routes/paymentRoute");
 
 // API Routes Middleware -----------------
 app.use(LoginRegisterRoute);
