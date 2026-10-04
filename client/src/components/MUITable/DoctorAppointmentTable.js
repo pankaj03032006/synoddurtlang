@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { NavLink,useNavigate } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
+
 import {
     Paper, Table, TableBody, TableCell, TableContainer, TableHead,
     TablePagination, TableRow, Tooltip, CircularProgress, Alert,
@@ -66,7 +67,7 @@ export default function DoctorAppointmentTable({
     getAvailableSlots,
     getBookedSlots,
 }) {
-    const navigate = useNavigate();
+    
 
     const [page, setPage] = React.useState(0);
     const [rowsPerPage, setRowsPerPage] = React.useState(10);
