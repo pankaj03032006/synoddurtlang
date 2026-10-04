@@ -1,12 +1,20 @@
+
 import React, { useState, useContext, useCallback } from 'react';
 import { useNavigate } from "react-router-dom";
+
 import ErrorDialogueBox from '../MUIDialogueBox/ErrorDialogueBox';
 import { UserContext } from '../../Context/UserContext';
+
 import CircularProgress from '@mui/material/CircularProgress';
 import IconButton from '@mui/material/IconButton';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
+
 import styles from './Login.module.css';
+
+// Use Vercel/production API URL when deployed.
+// Use localhost:5000 when running locally.
+const API = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 function Login() {
     const navigate = useNavigate();
@@ -15,6 +23,7 @@ function Login() {
     const [email, setEmail] = useState('');
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+
     const [errorDialogueBoxOpen, setErrorDialogueBoxOpen] = useState(false);
     const [errorList, setErrorList] = useState([]);
     const [fieldErrors, setFieldErrors] = useState({});
@@ -33,43 +42,48 @@ function Login() {
 
     const validateForm = useCallback(() => {
         const errors = {};
-        
+
         if (!email) {
             errors.email = "Email is required";
         } else if (!/\S+@\S+\.\S+/.test(email)) {
             errors.email = "Please enter a valid email address";
         }
-        
+
         if (!password) {
             errors.password = "Password is required";
         } else if (password.length < 6) {
             errors.password = "Password must be at least 6 characters";
         }
-        
+
         setFieldErrors(errors);
+
         return Object.keys(errors).length === 0;
     }, [email, password]);
 
     const handleSubmit = useCallback(async (event) => {
         event.preventDefault();
-        
-        // Validate form before submission
+
         if (!validateForm()) {
             return;
         }
-        
+
         setLoading(true);
         setFieldErrors({});
-        
+
         try {
             const user = {
                 email: email.trim(),
                 password: password
             };
-            
-            console.log('Sending login request:', { email: user.email });
-            
-            const response = await fetch('http://localhost:5000/login', {
+
+            console.log('API URL:', API);
+            console.log('Sending login request:', {
+                email: user.email
+            });
+
+            // IMPORTANT:
+            // Do NOT use Markdown syntax here.
+            const response = await fetch(`${API}/login`, {
                 method: "POST",
                 headers: {
                     'Content-Type': 'application/json',
@@ -77,77 +91,134 @@ function Login() {
                 },
                 body: JSON.stringify(user)
             });
-            
+
             console.log('Response status:', response.status);
-            
-            // Check if response is JSON
+
             const contentType = response.headers.get("content-type");
+
             if (!contentType || !contentType.includes("application/json")) {
                 const text = await response.text();
+
                 console.error('Non-JSON response:', text);
-                throw new Error("Server returned an invalid response");
+
+                throw new Error(
+                    `Server returned an invalid response. Status: ${response.status}`
+                );
             }
-            
+
             const data = await response.json();
+
             console.log('Login response data:', data);
-            
-            // Check for success response
-            if (response.ok && data.message === "success" && data.user) {
-                // Store user data and token in context
+
+            // Successful login
+            if (
+                response.ok &&
+                data.message === "success" &&
+                data.user
+            ) {
                 signInUser(data.user, data.token);
-                
-                // Store in localStorage with correct keys
+
                 localStorage.setItem("token", data.token);
-                localStorage.setItem("currentUser", JSON.stringify(data.user));
-                localStorage.setItem("userType", data.user.userType);
-                localStorage.setItem("userId", data.user.userId || data.user._id);
-                localStorage.setItem("userName", `${data.user.firstName} ${data.user.lastName}`);
-                
-                console.log('Login successful! User type:', data.user.userType);
-                
-                // FIXED: Redirect to correct dashboard routes
+                localStorage.setItem(
+                    "currentUser",
+                    JSON.stringify(data.user)
+                );
+
+                localStorage.setItem(
+                    "userType",
+                    data.user.userType
+                );
+
+                localStorage.setItem(
+                    "userId",
+                    data.user.userId || data.user._id
+                );
+
+                localStorage.setItem(
+                    "userName",
+                    `${data.user.firstName} ${data.user.lastName}`
+                );
+
+                console.log(
+                    'Login successful! User type:',
+                    data.user.userType
+                );
+
+                // Redirect based on user type
                 if (data.user.userType === 'Admin') {
                     navigate("/admin/dashboard");
+
                 } else if (data.user.userType === 'Doctor') {
                     navigate("/doctor/dashboard");
+
                 } else if (data.user.userType === 'Patient') {
                     navigate("/patient/dashboard");
+
                 } else {
                     navigate("/login");
                 }
+
             } else {
-                // Handle error response
+                // Backend returned an error
                 let errorMessages = [];
-                
-                if (data.errors && Array.isArray(data.errors)) {
+
+                if (
+                    data.errors &&
+                    Array.isArray(data.errors)
+                ) {
                     errorMessages = data.errors;
-                } else if (data.message && data.message !== "success") {
+
+                } else if (
+                    data.message &&
+                    data.message !== "success"
+                ) {
                     errorMessages = [data.message];
+
                 } else {
-                    errorMessages = ["Invalid email or password. Please try again."];
+                    errorMessages = [
+                        "Invalid email or password. Please try again."
+                    ];
                 }
-                
+
                 setErrorList(errorMessages);
                 handleDialogueOpen();
             }
+
         } catch (error) {
             console.error("Login error:", error);
-            
-            if (error.message === 'Failed to fetch') {
+
+            if (
+                error.message === 'Failed to fetch' ||
+                error.name === 'TypeError'
+            ) {
                 setErrorList([
-                    "Cannot connect to server. Please check:",
-                    "1. Backend is running on port 3001",
-                    "2. Run 'npm start' in the server folder",
-                    "3. Check if MongoDB is connected"
+                    "Cannot connect to the backend server.",
+                    `API URL: ${API}`,
+                    "Please check that your backend is running and that the API URL is correct.",
+                    "If this is a deployed Vercel application, make sure REACT_APP_API_URL points to your deployed backend."
                 ]);
+
             } else {
-                setErrorList([error.message || "Network error. Please check your connection and try again."]);
+                setErrorList([
+                    error.message ||
+                    "Network error. Please check your connection and try again."
+                ]);
             }
+
             handleDialogueOpen();
+
         } finally {
             setLoading(false);
         }
-    }, [email, password, validateForm, signInUser, navigate, handleDialogueOpen]);
+
+    }, [
+        email,
+        password,
+        validateForm,
+        signInUser,
+        navigate,
+        handleDialogueOpen
+    ]);
 
     const signUpClicked = useCallback(() => {
         navigate("/signup");
@@ -163,16 +234,36 @@ function Login() {
 
     return (
         <div id={styles.loginBody}>
+
             <div className={styles.greenLayer1}>
+
                 <div id={styles.loginFormDiv}>
+
                     <div className="text-center mb-4">
-                        <h2 className="fw-bold" style={{ color: '#2c3e50' }}>Welcome Back!</h2>
-                        <p className="text-muted">Please login to your account</p>
+
+                        <h2
+                            className="fw-bold"
+                            style={{ color: '#2c3e50' }}
+                        >
+                            Welcome Back!
+                        </h2>
+
+                        <p className="text-muted">
+                            Please login to your account
+                        </p>
+
                     </div>
-                    
-                    <form onSubmit={handleSubmit} className="col-12 col-md-8 col-lg-6 mx-auto" name="loginForm" id="loginForm">
+
+                    <form
+                        onSubmit={handleSubmit}
+                        className="col-12 col-md-8 col-lg-6 mx-auto"
+                        name="loginForm"
+                        id="loginForm"
+                    >
+
                         {/* Email Field */}
                         <div className='form-floating mt-3'>
+
                             <input
                                 type="email"
                                 id="email"
@@ -181,44 +272,77 @@ function Login() {
                                 value={email}
                                 onChange={(event) => {
                                     setEmail(event.target.value);
+
                                     if (fieldErrors.email) {
-                                        setFieldErrors(prev => ({ ...prev, email: '' }));
+                                        setFieldErrors(prev => ({
+                                            ...prev,
+                                            email: ''
+                                        }));
                                     }
                                 }}
                                 required
-                                className={`form-control ${fieldErrors.email ? 'is-invalid' : ''}`}
+                                className={`form-control ${
+                                    fieldErrors.email
+                                        ? 'is-invalid'
+                                        : ''
+                                }`}
                                 disabled={loading}
                                 autoComplete="email"
                             />
-                            <label htmlFor="email">Email Address</label>
+
+                            <label htmlFor="email">
+                                Email Address
+                            </label>
+
                             {fieldErrors.email && (
                                 <div className="invalid-feedback">
                                     {fieldErrors.email}
                                 </div>
                             )}
+
                         </div>
 
                         {/* Password Field */}
                         <div className='form-floating mt-4 position-relative'>
+
                             <input
-                                type={showPassword ? "text" : "password"}
+                                type={
+                                    showPassword
+                                        ? "text"
+                                        : "password"
+                                }
                                 id="password"
                                 name="password"
                                 value={password}
                                 onChange={(event) => {
                                     setPassword(event.target.value);
+
                                     if (fieldErrors.password) {
-                                        setFieldErrors(prev => ({ ...prev, password: '' }));
+                                        setFieldErrors(prev => ({
+                                            ...prev,
+                                            password: ''
+                                        }));
                                     }
                                 }}
-                                className={`form-control ${fieldErrors.password ? 'is-invalid' : ''}`}
+                                className={`form-control ${
+                                    fieldErrors.password
+                                        ? 'is-invalid'
+                                        : ''
+                                }`}
                                 required
                                 placeholder="password"
                                 disabled={loading}
                                 autoComplete="current-password"
                             />
-                            <label htmlFor="password">Password</label>
-                            <div className="position-absolute end-0 top-50 translate-middle-y me-2" style={{ zIndex: 5 }}>
+
+                            <label htmlFor="password">
+                                Password
+                            </label>
+
+                            <div
+                                className="position-absolute end-0 top-50 translate-middle-y me-2"
+                                style={{ zIndex: 5 }}
+                            >
                                 <IconButton
                                     aria-label="toggle password visibility"
                                     onClick={togglePasswordVisibility}
@@ -226,18 +350,25 @@ function Login() {
                                     disabled={loading}
                                     size="small"
                                 >
-                                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                                    {showPassword ? (
+                                        <VisibilityOff />
+                                    ) : (
+                                        <Visibility />
+                                    )}
                                 </IconButton>
                             </div>
+
                             {fieldErrors.password && (
                                 <div className="invalid-feedback">
                                     {fieldErrors.password}
                                 </div>
                             )}
+
                         </div>
 
-                        {/* Forgot Password Link */}
+                        {/* Forgot Password */}
                         <div className="text-end mt-2">
+
                             <button
                                 type="button"
                                 className="btn btn-link text-decoration-none p-0"
@@ -247,26 +378,37 @@ function Login() {
                             >
                                 Forgot Password?
                             </button>
+
                         </div>
 
                         {/* Form Actions */}
                         <div className='d-flex flex-column flex-md-row gap-3 mt-4'>
-                            <button 
-                                className='col-12 col-md-6 btn btn-primary py-2' 
-                                id={styles.loginBtn} 
-                                type="submit" 
+
+                            <button
+                                className='col-12 col-md-6 btn btn-primary py-2'
+                                id={styles.loginBtn}
+                                type="submit"
                                 disabled={loading}
                             >
+
                                 {loading ? (
                                     <>
-                                        <CircularProgress size={20} color="inherit" />
-                                        <span className="ms-2">Logging in...</span>
+                                        <CircularProgress
+                                            size={20}
+                                            color="inherit"
+                                        />
+
+                                        <span className="ms-2">
+                                            Logging in...
+                                        </span>
                                     </>
                                 ) : (
                                     'Login'
                                 )}
+
                             </button>
-                            <button 
+
+                            <button
                                 type="button"
                                 className='col-12 col-md-6 btn btn-outline-secondary py-2'
                                 onClick={signUpClicked}
@@ -274,23 +416,25 @@ function Login() {
                             >
                                 Sign Up
                             </button>
+
                         </div>
 
-                        {/* Demo Credentials Info */}
-                         
-                      
                     </form>
+
                 </div>
+
             </div>
-            
+
             <ErrorDialogueBox
                 open={errorDialogueBoxOpen}
                 handleToClose={handleDialogueClose}
                 ErrorTitle="Login Error"
                 ErrorList={errorList}
             />
+
         </div>
     );
 }
 
 export default Login;
+
