@@ -41,7 +41,7 @@ function EditUser() {
 
     setLoading(true);
     try {
-      const response = await axios.get(`http://localhost:5000/users/${id}`, {
+      const response = await axios.get(`https://synoddurtlang.onrender.com/users/${id}`, {
         headers: {
           authorization: `Bearer ${localStorage.getItem("token")}`
         }
@@ -92,7 +92,7 @@ function EditUser() {
     setIsSubmitting(true);
     
     try {
-      await axios.patch(`http://localhost:5000/users/${id}`,
+      await axios.patch(`https://synoddurtlang.onrender.com/users/${id}`,
         {
           firstName,
           lastName,

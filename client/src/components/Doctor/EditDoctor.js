@@ -81,7 +81,7 @@ function Editdoctor() {
   const getdoctorById = useCallback(async () => {
     setFetchingData(true);
     try {
-      const response = await axios.get(`http://localhost:5000/doctors/${id}`, {
+      const response = await axios.get(`https://synoddurtlang.onrender.com/doctors/${id}`, {
         headers: {
           authorization: `Bearer ${localStorage.getItem("token")}`
         }
@@ -150,7 +150,7 @@ function Editdoctor() {
         updateData.confirmPassword = confirmPassword;
       }
       
-      await axios.patch(`http://localhost:5000/doctors/${id}`, updateData, {
+      await axios.patch(`https://synoddurtlang.onrender.com/doctors/${id}`, updateData, {
         headers: {
           authorization: `Bearer ${localStorage.getItem("token")}`
         }

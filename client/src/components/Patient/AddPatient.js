@@ -119,7 +119,7 @@ function AddPatient() {
         dob: dob
       };
       
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/patients`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'https://synoddurtlang.onrender.com'}/patients`, {
         method: "POST",
         headers: {
           'Content-Type': 'application/json',

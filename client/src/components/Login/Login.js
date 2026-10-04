@@ -14,7 +14,7 @@ import styles from './Login.module.css';
 
 // Use Vercel/production API URL when deployed.
 // Use localhost:5000 when running locally.
-const API = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API = process.env.REACT_APP_API_URL || 'https://synoddurtlang.onrender.com';
 
 function Login() {
     const navigate = useNavigate();

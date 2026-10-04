@@ -103,7 +103,7 @@ function SignupPage() {
     try {
       console.log('Sending user data:', user);
       
-      const response = await fetch('http://localhost:5000/signup', {
+      const response = await fetch('https://synoddurtlang.onrender.com/signup', {
         method: "POST",
         headers: {
           'Content-Type': 'application/json',

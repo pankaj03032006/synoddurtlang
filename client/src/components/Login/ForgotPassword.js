@@ -29,7 +29,7 @@ function ForgotPassword() {
         setMessage('');
 
         try {
-            const response = await axios.post('http://localhost:5000/forgot-password', { 
+            const response = await axios.post('https://synoddurtlang.onrender.com/forgot-password', { 
                 email 
             });
             
@@ -65,7 +65,7 @@ function ForgotPassword() {
         setMessage('');
 
         try {
-            const response = await axios.post('http://localhost:5000/reset-password', {
+            const response = await axios.post('https://synoddurtlang.onrender.com/reset-password', {
                 email,
                 otp,
                 newPassword

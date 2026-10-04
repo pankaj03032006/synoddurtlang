@@ -40,7 +40,7 @@ export default function PatientDashboard() {
 	const getBookedSlots = async () => {
 		try {
 			const response = await axios.post(
-				`http://localhost:5000/appointments`,
+				`https://synoddurtlang.onrender.com/appointments`,
 				{ isTimeSlotAvailable: false },
 				{
 					headers: {
@@ -76,7 +76,7 @@ export default function PatientDashboard() {
 	const getPrescription = async () => {
 		try {
 			const response = await axios.post(
-				`http://localhost:5000/prescriptions`,
+				`https://synoddurtlang.onrender.com/prescriptions`,
 				{},
 				{
 					headers: {

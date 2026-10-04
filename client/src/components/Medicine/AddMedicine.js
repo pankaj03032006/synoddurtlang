@@ -203,7 +203,7 @@ function Addmedicine() {
         totalValue: parseFloat(price) * parseInt(quantity)
       };
       console.log("DATA BEING SENT:", medicine);
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/medicines`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'https://synoddurtlang.onrender.com'}/medicines`, {
         method: "POST",
         headers: {
           'Content-Type': 'application/json',

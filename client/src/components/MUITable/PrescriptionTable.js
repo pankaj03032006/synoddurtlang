@@ -107,7 +107,7 @@ export default function PrescriptionTable({ prescriptionList, loading: propLoadi
         try {
             // 1. Ask the backend to create a Razorpay order for this prescription
             const orderRes = await axios.post(
-                `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/payment/create-order`,
+                `${process.env.REACT_APP_API_URL || 'https://synoddurtlang.onrender.com'}/payment/create-order`,
                 { prescriptionId },
                 {
                     headers: {
@@ -136,7 +136,7 @@ export default function PrescriptionTable({ prescriptionList, loading: propLoadi
                 handler: async function (response) {
                     try {
                         const verifyRes = await axios.post(
-                            `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/payment/verify-payment`,
+                            `${process.env.REACT_APP_API_URL || 'https://synoddurtlang.onrender.com'}/payment/verify-payment`,
                             {
                                 razorpay_order_id: response.razorpay_order_id,
                                 razorpay_payment_id: response.razorpay_payment_id,
@@ -224,7 +224,7 @@ export default function PrescriptionTable({ prescriptionList, loading: propLoadi
 
         try {
             const response = await axios.get(
-                `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/prescription/invoice/${prescriptionId}`,
+                `${process.env.REACT_APP_API_URL || 'https://synoddurtlang.onrender.com'}/prescription/invoice/${prescriptionId}`,
                 {
                     responseType: 'blob',
                     headers: {

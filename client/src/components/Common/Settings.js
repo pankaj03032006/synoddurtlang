@@ -67,7 +67,7 @@ export default function Settings() {
     useEffect(() => {
         const fetchProfile = async () => {
             try {
-                const response = await axios.get('http://localhost:5000/user/profile', {
+                const response = await axios.get('https://synoddurtlang.onrender.com/user/profile', {
                     headers: { authorization: `Bearer ${token}` },
                 });
                 if (response.data.message === 'success') {
@@ -104,7 +104,7 @@ export default function Settings() {
         setProfileLoading(true);
         try {
             const response = await axios.put(
-                'http://localhost:5000/user/profile',
+                'https://synoddurtlang.onrender.com/user/profile',
                 profile,
                 { headers: { authorization: `Bearer ${token}` } }
             );
@@ -147,7 +147,7 @@ export default function Settings() {
         setPasswordLoading(true);
         try {
             const response = await axios.put(
-                'http://localhost:5000/user/change-password',
+                'https://synoddurtlang.onrender.com/user/change-password',
                 {
                     currentPassword: passwordData.currentPassword,
                     newPassword: passwordData.newPassword,

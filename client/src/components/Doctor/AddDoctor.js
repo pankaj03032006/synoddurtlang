@@ -114,7 +114,7 @@ function Adddoctor() {
 
     try {
       // CHANGED: Back to port 3001 (where your backend actually runs)
-      const API_URL = 'http://localhost:5000/doctors';
+      const API_URL = 'https://synoddurtlang.onrender.com/doctors';
       console.log('Sending POST request to:', API_URL);
       console.log('Doctor data:', doctor);
       

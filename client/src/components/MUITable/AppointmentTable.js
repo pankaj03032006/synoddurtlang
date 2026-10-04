@@ -22,7 +22,7 @@ import AppointmentForm from '../Forms/AppointmentForm';
 const GREEN = '#31b372';
 const GREEN_DARK = '#28995f';
 const RED = '#d32f2f';
-const API = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API = process.env.REACT_APP_API_URL || 'https://synoddurtlang.onrender.com';
 
 function createData(patientName, doctorName, appointmentDate, appointmentTime, actionsID, appointmentData) {
     return { patientName, doctorName, appointmentDate, appointmentTime, actionsID, appointmentData };

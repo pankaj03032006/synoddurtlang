@@ -91,7 +91,7 @@ const sendVerificationEmail = async (email, token) => {
             }
         });
 
-        const verificationLink = `http://localhost:5000/verify/${token}`;
+        const verificationLink = `https://synoddurtlang.onrender.com/verify/${token}`;
         
         const mailOptions = {
             from: process.env.GMAIL_USER,

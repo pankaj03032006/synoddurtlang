@@ -62,7 +62,7 @@ export default function HelpSupport() {
 
         setLoading(true);
         try {
-            await axios.post('http://localhost:5000/support', { subject, message });
+            await axios.post('https://synoddurtlang.onrender.com/support', { subject, message });
             notify('success', "Message sent! We'll get back to you within 24 hours.");
             setSubject('');
             setMessage('');

@@ -12,7 +12,7 @@ import {
 import axios from "axios";
 import { UserContext } from '../../Context/UserContext';
 
-const API = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API = process.env.REACT_APP_API_URL || 'https://synoddurtlang.onrender.com';
 const GREEN = '#28543e';
 const GREEN_DARK = '#24513a';
 

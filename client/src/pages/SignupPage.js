@@ -70,7 +70,7 @@ function SignupPage() {
     };
     
     try {
-      const response = await fetch('http://localhost:5000/api/signUp', {
+      const response = await fetch('https://synoddurtlang.onrender.com/api/signUp', {
         method: "POST",
         headers: {
           'Content-Type': 'application/json'
