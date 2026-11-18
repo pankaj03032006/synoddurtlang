@@ -1,51 +1,6 @@
-Hospital Management System
-A full-stack web application designed to help hospitals manage patient
-and doctor workflows, appointments, prescriptions, and administrative
-operations through role-based access.
-Project status: Update the bracketed placeholders and verify each
-feature against the current repository before submitting. Do not leave
-placeholder links in the final public README.
 
-Table of Contents
-- Team Details
-- College / Incubator Information
-- Project Overview
-- Problem Statement
-- Healthcare Use Case
-- Objectives
-- Key Features
-- User Roles
-- Technology Stack
-- System Architecture
-- Application Workflow
-- Security
-- Project Structure
-- Prerequisites
-- Installation and Setup
-- Environment Variables
-- Running the Application
-- API Overview
-- Database Overview
-- Demo Video
-- Architecture Diagram
-- Project Presentation
-- Testing
-- Deployment
-- Limitations and Future
-  Enhancements
-- Open-Source License
-- Acknowledgements
-Team Details
-  Field           Details
-  Team name       TechTitan
-  Team leader     Pankaj Kumar Singh
-  Team members    Pankaj Kumar Singh
-  Contact email   pankaj03032006@gmail.com
-College / Incubator Information
-  Field                               Details
-  College / Institution               National Institute of Technology Mizoram
 
-  Department                          Computer Science and Engineering
+
 
  
 Project Overview
